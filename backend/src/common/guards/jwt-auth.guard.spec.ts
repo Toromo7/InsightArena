@@ -31,7 +31,7 @@ describe('JwtAuthGuard', () => {
         .spyOn(Object.getPrototypeOf(JwtAuthGuard.prototype), 'canActivate')
         .mockReturnValue(true);
       const ctx = mockContext();
-      void guard.canActivate(ctx);
+      guard.canActivate(ctx);
       expect(superSpy).toHaveBeenCalledWith(ctx);
       superSpy.mockRestore();
     });
