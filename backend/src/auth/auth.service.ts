@@ -12,7 +12,7 @@ export class AuthService {
   generateChallenge(stellar_address: string): string {
     const timestamp = Date.now();
     const random = randomBytes(16).toString('hex');
-    const challenge = `InsightArena:nonce:${timestamp}:${random}`;
+    const challenge = `InsightArena:nonce:${timestamp}:${random}:${stellar_address}`;
 
     // Store the challenge with its expiration time
     this.challengeCache.set(challenge, timestamp + this.TTL_MS);
@@ -38,9 +38,9 @@ export class AuthService {
 
     return true;
   }
-  
+
   removeChallenge(challenge: string): void {
-      this.challengeCache.delete(challenge);
+    this.challengeCache.delete(challenge);
   }
 
   private cleanupExpiredChallenges() {

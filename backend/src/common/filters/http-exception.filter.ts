@@ -25,18 +25,26 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
-      
+
       if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
-        const resMessage = (exceptionResponse as any).message;
-        message = Array.isArray(resMessage) 
-          ? resMessage.join(', ') 
-          : (resMessage || exception.message);
+        const responseBody = exceptionResponse as Record<string, unknown>;
+        const resMessage = responseBody.message;
+        if (Array.isArray(resMessage)) {
+          message = resMessage.join(', ');
+        } else if (typeof resMessage === 'string') {
+          message = resMessage;
+        } else {
+          message = exception.message;
+        }
+      } else if (typeof exceptionResponse === 'string') {
+        message = exceptionResponse;
       } else {
         message = exception.message;
       }
       code = status;
     } else if (exception instanceof QueryFailedError) {
-      if ((exception as any).code === '23505') {
+      const queryError = exception as QueryFailedError & { code?: string };
+      if (queryError.code === '23505') {
         status = HttpStatus.CONFLICT;
         message = 'A record with these details already exists.';
       } else {
@@ -47,7 +55,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
 
     if (status === HttpStatus.INTERNAL_SERVER_ERROR) {
-      message = 'Internal server error'; 
+      message = 'Internal server error';
       this.logger.error(
         `${request.method} ${request.url}`,
         exception instanceof Error ? exception.stack : String(exception),

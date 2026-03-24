@@ -14,9 +14,11 @@ describe('AuthController', () => {
         {
           provide: AuthService,
           useValue: {
-            generateChallenge: jest.fn().mockImplementation((address: string) => {
-              return `InsightArena:nonce:1234567890:randomStringFor${address}`;
-            }),
+            generateChallenge: jest
+              .fn()
+              .mockImplementation((address: string) => {
+                return `InsightArena:nonce:1234567890:randomStringFor${address}`;
+              }),
           },
         },
       ],
@@ -35,6 +37,7 @@ describe('AuthController', () => {
       const dto: GenerateChallengeDto = { stellar_address: 'GDQ...' };
       const result = controller.generateChallenge(dto);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(authService.generateChallenge).toHaveBeenCalledWith('GDQ...');
       expect(result).toHaveProperty('challenge');
       expect(result.challenge).toMatch(/^InsightArena:nonce:/);

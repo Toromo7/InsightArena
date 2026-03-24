@@ -21,7 +21,7 @@ describe('UserEntity validation', () => {
   it('should fail validation if stellar_address is missing', async () => {
     const user = new User();
     user.username = 'testuser';
-    
+
     const errors = await validate(user);
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0].property).toBe('stellar_address');
@@ -31,9 +31,9 @@ describe('UserEntity validation', () => {
     const user = new User();
     user.stellar_address = 'GASDFASDF';
     user.role = 'superadmin';
-    
+
     const errors = await validate(user);
     expect(errors.length).toBeGreaterThan(0);
-    expect(errors.find(e => e.property === 'role')).toBeDefined();
+    expect(errors.find((e) => e.property === 'role')).toBeDefined();
   });
 });

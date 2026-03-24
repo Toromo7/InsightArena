@@ -19,7 +19,7 @@ describe('AuthService', () => {
   describe('generateChallenge', () => {
     it('should generate a valid challenge format', () => {
       const challenge = service.generateChallenge('some-address');
-      
+
       // Expected format: InsightArena:nonce:{timestamp}:{random}
       const parts = challenge.split(':');
       expect(parts.length).toBe(4);
@@ -46,7 +46,7 @@ describe('AuthService', () => {
 
     it('should expire challenge after TTL', () => {
       jest.useFakeTimers();
-      
+
       const challenge = service.generateChallenge('addr1');
       expect(service.isValidChallenge(challenge)).toBe(true);
 
