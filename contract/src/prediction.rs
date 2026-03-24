@@ -186,6 +186,33 @@ pub fn submit_prediction(
     Ok(())
 }
 
+/// Return the stored [`Prediction`] for a given `(market_id, predictor)` pair.
+///
+/// This is a read-only query — no state is mutated. The TTL of the prediction
+/// record is extended on every successful read so it remains live while clients
+/// are actively querying it.
+///
+/// # Errors
+/// - `PredictionNotFound` — no prediction exists for the supplied key.
+pub fn get_prediction(
+    env: &Env,
+    market_id: u64,
+    predictor: Address,
+) -> Result<Prediction, InsightArenaError> {
+    let key = DataKey::Prediction(market_id, predictor.clone());
+
+    let prediction: Prediction = env
+        .storage()
+        .persistent()
+        .get(&key)
+        .ok_or(InsightArenaError::PredictionNotFound)?;
+
+    // Extend TTL so an active read keeps the record alive.
+    bump_prediction(env, market_id, &predictor);
+
+    Ok(prediction)
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -238,6 +265,7 @@ mod prediction_tests {
         StellarAssetClient::new(env, xlm_token).mint(recipient, &amount);
     }
 
+    // ── submit_prediction tests ───────────────────────────────────────────────
     // ── Happy path ────────────────────────────────────────────────────────────
 
     #[test]
@@ -649,5 +677,138 @@ mod prediction_tests {
         );
         let market = client.get_market(&market_id);
         assert_eq!(market.total_pool, 100_000_000);
+    }
+
+    // ── get_prediction tests ──────────────────────────────────────────────────
+
+    /// Returns the full Prediction struct when the record exists.
+    #[test]
+    fn get_prediction_returns_correct_struct() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, xlm_token) = deploy(&env);
+        let creator = Address::generate(&env);
+        let predictor = Address::generate(&env);
+        let stake: i128 = 20_000_000;
+
+        let market_id = client.create_market(&creator, &default_params(&env));
+        fund(&env, &xlm_token, &predictor, stake);
+        client.submit_prediction(&predictor, &market_id, &symbol_short!("yes"), &stake);
+
+        let pred = client.get_prediction(&market_id, &predictor);
+
+        assert_eq!(pred.market_id, market_id);
+        assert_eq!(pred.predictor, predictor);
+        assert_eq!(pred.chosen_outcome, symbol_short!("yes"));
+        assert_eq!(pred.stake_amount, stake);
+        assert!(!pred.payout_claimed);
+        assert_eq!(pred.payout_amount, 0);
+    }
+
+    /// Returns `PredictionNotFound` when no prediction exists for the key.
+    #[test]
+    fn get_prediction_returns_not_found_for_missing_key() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, _) = deploy(&env);
+        let predictor = Address::generate(&env);
+
+        let result = client.try_get_prediction(&99_u64, &predictor);
+        assert!(matches!(
+            result,
+            Err(Ok(InsightArenaError::PredictionNotFound))
+        ));
+    }
+
+    /// `get_prediction` on a predictor address that has not staked on a real market
+    /// also returns `PredictionNotFound`.
+    #[test]
+    fn get_prediction_returns_not_found_for_wrong_predictor() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, xlm_token) = deploy(&env);
+        let creator = Address::generate(&env);
+        let predictor = Address::generate(&env);
+        let stranger = Address::generate(&env);
+
+        let market_id = client.create_market(&creator, &default_params(&env));
+        fund(&env, &xlm_token, &predictor, 20_000_000);
+        client.submit_prediction(
+            &predictor,
+            &market_id,
+            &symbol_short!("yes"),
+            &20_000_000_i128,
+        );
+
+        // stranger never predicted — must get PredictionNotFound
+        let result = client.try_get_prediction(&market_id, &stranger);
+        assert!(matches!(
+            result,
+            Err(Ok(InsightArenaError::PredictionNotFound))
+        ));
+    }
+
+    /// `get_prediction` does not mutate market state.
+    #[test]
+    fn get_prediction_does_not_mutate_market() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, xlm_token) = deploy(&env);
+        let creator = Address::generate(&env);
+        let predictor = Address::generate(&env);
+        let stake: i128 = 20_000_000;
+
+        let market_id = client.create_market(&creator, &default_params(&env));
+        fund(&env, &xlm_token, &predictor, stake);
+        client.submit_prediction(&predictor, &market_id, &symbol_short!("yes"), &stake);
+
+        let before = client.get_market(&market_id);
+        client.get_prediction(&market_id, &predictor);
+        let after = client.get_market(&market_id);
+
+        assert_eq!(before.total_pool, after.total_pool);
+        assert_eq!(before.participant_count, after.participant_count);
+        assert_eq!(before.is_closed, after.is_closed);
+    }
+
+    /// `get_prediction` does not mutate the prediction record itself.
+    #[test]
+    fn get_prediction_does_not_mutate_prediction_record() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, xlm_token) = deploy(&env);
+        let creator = Address::generate(&env);
+        let predictor = Address::generate(&env);
+        let stake: i128 = 20_000_000;
+
+        let market_id = client.create_market(&creator, &default_params(&env));
+        fund(&env, &xlm_token, &predictor, stake);
+        client.submit_prediction(&predictor, &market_id, &symbol_short!("yes"), &stake);
+
+        let first = client.get_prediction(&market_id, &predictor);
+        let second = client.get_prediction(&market_id, &predictor);
+
+        assert_eq!(first, second);
+    }
+
+    /// Calling `get_prediction` multiple times always returns the same struct.
+    #[test]
+    fn get_prediction_is_idempotent() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, xlm_token) = deploy(&env);
+        let creator = Address::generate(&env);
+        let predictor = Address::generate(&env);
+        let stake: i128 = 50_000_000;
+
+        let market_id = client.create_market(&creator, &default_params(&env));
+        fund(&env, &xlm_token, &predictor, stake);
+        client.submit_prediction(&predictor, &market_id, &symbol_short!("no"), &stake);
+
+        for _ in 0..3 {
+            let pred = client.get_prediction(&market_id, &predictor);
+            assert_eq!(pred.stake_amount, stake);
+            assert_eq!(pred.chosen_outcome, symbol_short!("no"));
+        }
     }
 }

@@ -135,6 +135,19 @@ impl InsightArenaContract {
     ) -> Result<(), InsightArenaError> {
         prediction::submit_prediction(&env, predictor, market_id, chosen_outcome, stake_amount)
     }
+
+    /// Return the stored [`Prediction`] for a given `(market_id, predictor)` pair.
+    ///
+    /// Read-only — no state is mutated. The prediction's TTL is extended on
+    /// every successful call. Returns `PredictionNotFound` if no prediction
+    /// exists for the supplied key.
+    pub fn get_prediction(
+        env: Env,
+        market_id: u64,
+        predictor: Address,
+    ) -> Result<Prediction, InsightArenaError> {
+        prediction::get_prediction(&env, market_id, predictor)
+    }
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
