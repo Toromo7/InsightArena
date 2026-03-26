@@ -12,7 +12,10 @@ pub mod storage_types;
 pub use crate::config::Config;
 pub use crate::errors::InsightArenaError;
 pub use crate::market::CreateMarketParams;
-pub use crate::storage_types::{DataKey, InviteCode, Market, Prediction, Season, UserProfile};
+pub use crate::storage_types::{
+    DataKey, InviteCode, LeaderboardEntry, LeaderboardSnapshot, Market, Prediction, Season,
+    UserProfile,
+};
 
 use soroban_sdk::{contract, contractimpl, Address, Env, Symbol, Vec};
 
@@ -254,6 +257,71 @@ impl InsightArenaContract {
     ) -> Result<Symbol, InsightArenaError> {
         invite::generate_invite_code(env, creator, market_id, max_uses, expires_in_seconds)
     }
+
+    // ── Leaderboard ──────────────────────────────────────────────────────────
+
+    /// Store a leaderboard snapshot for a given season.
+    /// Restricted to the platform admin or the configured oracle.
+    pub fn update_leaderboard(
+        env: Env,
+        caller: Address,
+        season_id: u32,
+        entries: Vec<LeaderboardEntry>,
+    ) -> Result<(), InsightArenaError> {
+        config::ensure_not_paused(&env)?;
+        caller.require_auth();
+
+        let cfg = config::get_config(&env)?;
+        if caller != cfg.admin && caller != cfg.oracle_address {
+            return Err(InsightArenaError::Unauthorized);
+        }
+
+        let snapshot = LeaderboardSnapshot {
+            season_id,
+            timestamp: env.ledger().timestamp(),
+            entries,
+        };
+
+        let leaderboard_key = DataKey::Leaderboard(season_id);
+        env.storage().persistent().set(&leaderboard_key, &snapshot);
+
+        // Update SnapshotSeasonList
+        let list_key = DataKey::SnapshotSeasonList;
+        let mut seasons: Vec<u32> = env
+            .storage()
+            .persistent()
+            .get(&list_key)
+            .unwrap_or_else(|| Vec::new(&env));
+
+        if !seasons.contains(season_id) {
+            seasons.push_back(season_id);
+            env.storage().persistent().set(&list_key, &seasons);
+        }
+
+        Ok(())
+    }
+
+    /// Query a leaderboard snapshot from any previous season by ID.
+    /// Returns `SeasonNotFound` if no snapshot exists for that season.
+    pub fn get_historical_leaderboard(
+        env: Env,
+        season_id: u32,
+    ) -> Result<LeaderboardSnapshot, InsightArenaError> {
+        config::ensure_not_paused(&env)?;
+        let key = DataKey::Leaderboard(season_id);
+        env.storage()
+            .persistent()
+            .get(&key)
+            .ok_or(InsightArenaError::SeasonNotFound)
+    }
+
+    /// List all season IDs which have snapshots available.
+    pub fn list_snapshot_seasons(env: Env) -> Vec<u32> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::SnapshotSeasonList)
+            .unwrap_or_else(|| Vec::new(&env))
+    }
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -340,5 +408,118 @@ mod config_tests {
 
         // Must succeed after resuming
         client.get_config();
+    }
+}
+
+#[cfg(test)]
+mod leaderboard_tests {
+    use soroban_sdk::testutils::Address as _;
+    use soroban_sdk::{vec, Address, Env};
+
+    use super::{
+        InsightArenaContract, InsightArenaContractClient, InsightArenaError, LeaderboardEntry,
+    };
+
+    fn deploy(env: &Env) -> (InsightArenaContractClient<'_>, Address, Address) {
+        let id = env.register(InsightArenaContract, ());
+        let client = InsightArenaContractClient::new(env, &id);
+        let admin = Address::generate(env);
+        let oracle = Address::generate(env);
+        let token_admin = Address::generate(env);
+        let xlm_token = env
+            .register_stellar_asset_contract_v2(token_admin)
+            .address();
+        env.mock_all_auths();
+        client.initialize(&admin, &oracle, &200_u32, &xlm_token);
+        (client, admin, oracle)
+    }
+
+    #[test]
+    fn test_update_and_get_historical_leaderboard() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, admin, _) = deploy(&env);
+
+        let season_id = 1;
+        let user1 = Address::generate(&env);
+        let user2 = Address::generate(&env);
+        let entries = vec![
+            &env,
+            LeaderboardEntry {
+                address: user1.clone(),
+                points: 100,
+            },
+            LeaderboardEntry {
+                address: user2.clone(),
+                points: 80,
+            },
+        ];
+
+        client.update_leaderboard(&admin, &season_id, &entries);
+
+        let snapshot = client.get_historical_leaderboard(&season_id);
+        assert_eq!(snapshot.season_id, season_id);
+        assert_eq!(snapshot.entries.len(), 2);
+        assert_eq!(snapshot.entries.get(0).unwrap().address, user1);
+        assert_eq!(snapshot.entries.get(0).unwrap().points, 100);
+        assert_eq!(snapshot.entries.get(1).unwrap().address, user2);
+        assert_eq!(snapshot.entries.get(1).unwrap().points, 80);
+    }
+
+    #[test]
+    fn test_list_snapshot_seasons_deduplication() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, admin, oracle) = deploy(&env);
+
+        assert_eq!(client.list_snapshot_seasons().len(), 0);
+
+        let entries = vec![&env];
+
+        // First snapshot for Season 1 (admin)
+        client.update_leaderboard(&admin, &1, &entries);
+        assert_eq!(client.list_snapshot_seasons().len(), 1);
+        assert_eq!(client.list_snapshot_seasons().get(0).unwrap(), 1);
+
+        // Update Snapshot for Season 1 (oracle) — should not duplicate in list
+        client.update_leaderboard(&oracle, &1, &entries);
+        assert_eq!(client.list_snapshot_seasons().len(), 1);
+
+        // Snapshot for Season 2
+        client.update_leaderboard(&admin, &2, &entries);
+        assert_eq!(client.list_snapshot_seasons().len(), 2);
+        assert_eq!(client.list_snapshot_seasons().get(1).unwrap(), 2);
+    }
+
+    #[test]
+    fn test_get_historical_leaderboard_not_found() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, _, _) = deploy(&env);
+
+        let result = client.try_get_historical_leaderboard(&99);
+        assert!(matches!(result, Err(Ok(InsightArenaError::SeasonNotFound))));
+    }
+
+    #[test]
+    fn test_update_leaderboard_unauthorized() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, _, _) = deploy(&env);
+        let stranger = Address::generate(&env);
+
+        let result = client.try_update_leaderboard(&stranger, &1, &vec![&env]);
+        assert!(matches!(result, Err(Ok(InsightArenaError::Unauthorized))));
+    }
+
+    #[test]
+    fn test_update_leaderboard_when_paused() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, admin, _) = deploy(&env);
+
+        client.set_paused(&true);
+        let result = client.try_update_leaderboard(&admin, &1, &vec![&env]);
+        assert!(matches!(result, Err(Ok(InsightArenaError::Paused))));
     }
 }

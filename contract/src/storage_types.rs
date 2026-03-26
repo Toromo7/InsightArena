@@ -13,7 +13,9 @@ pub enum DataKey {
     /// Keyed by user address. Represents an individual user's profile or state.
     User(Address),
     /// Keyed by season_id. Stores the leaderboard rankings per season.
-    Leaderboard(u64),
+    Leaderboard(u32),
+    /// Singleton. Stores the list of season IDs that have snapshots available.
+    SnapshotSeasonList,
     /// Keyed by season number. Represents a season's metadata and schedule.
     Season(u32),
     /// Keyed by code symbol. Maps an invite code to its underlying metadata.
@@ -299,4 +301,24 @@ impl InviteCode {
             is_active: true,
         }
     }
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct LeaderboardEntry {
+    /// The wallet address of the participant.
+    pub address: Address,
+    /// Points accumulated by the participant during the season.
+    pub points: u32,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct LeaderboardSnapshot {
+    /// Unique identifier for the season.
+    pub season_id: u32,
+    /// Ledger timestamp when the snapshot was recorded.
+    pub timestamp: u64,
+    /// Ranked list of participants and their scores.
+    pub entries: Vec<LeaderboardEntry>,
 }
