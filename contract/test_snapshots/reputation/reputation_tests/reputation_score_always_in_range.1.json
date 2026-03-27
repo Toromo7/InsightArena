@@ -60,7 +60,7 @@
                         "symbol": "description"
                       },
                       "val": {
-                        "string": "Daily weather market"
+                        "string": "desc"
                       }
                     },
                     {
@@ -129,7 +129,7 @@
                         "symbol": "title"
                       },
                       "val": {
-                        "string": "Will it rain?"
+                        "string": "Test market"
                       }
                     }
                   ]
@@ -143,112 +143,21 @@
     ],
     [
       [
-        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4",
+        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
         {
           "function": {
             "contract_fn": {
               "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
-              "function_name": "create_market",
+              "function_name": "resolve_market",
               "args": [
                 {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "map": [
-                    {
-                      "key": {
-                        "symbol": "category"
-                      },
-                      "val": {
-                        "symbol": "Crypto"
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "creator_fee_bps"
-                      },
-                      "val": {
-                        "u32": 100
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "description"
-                      },
-                      "val": {
-                        "string": "Daily weather market"
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "end_time"
-                      },
-                      "val": {
-                        "u64": 1000
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "is_public"
-                      },
-                      "val": {
-                        "bool": true
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "max_stake"
-                      },
-                      "val": {
-                        "i128": {
-                          "hi": 0,
-                          "lo": 100000000
-                        }
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "min_stake"
-                      },
-                      "val": {
-                        "i128": {
-                          "hi": 0,
-                          "lo": 10000000
-                        }
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "outcomes"
-                      },
-                      "val": {
-                        "vec": [
-                          {
-                            "symbol": "yes"
-                          },
-                          {
-                            "symbol": "no"
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "resolution_time"
-                      },
-                      "val": {
-                        "u64": 2000
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "title"
-                      },
-                      "val": {
-                        "string": "Will it rain?"
-                      }
-                    }
-                  ]
+                  "u64": 1
+                },
+                {
+                  "symbol": "yes"
                 }
               ]
             }
@@ -292,7 +201,7 @@
                         "symbol": "description"
                       },
                       "val": {
-                        "string": "Daily weather market"
+                        "string": "desc"
                       }
                     },
                     {
@@ -300,7 +209,7 @@
                         "symbol": "end_time"
                       },
                       "val": {
-                        "u64": 1000
+                        "u64": 3000
                       }
                     },
                     {
@@ -353,7 +262,7 @@
                         "symbol": "resolution_time"
                       },
                       "val": {
-                        "u64": 2000
+                        "u64": 4000
                       }
                     },
                     {
@@ -361,10 +270,176 @@
                         "symbol": "title"
                       },
                       "val": {
-                        "string": "Will it rain?"
+                        "string": "Test market"
                       }
                     }
                   ]
+                }
+              ]
+            }
+          },
+          "sub_invocations": []
+        }
+      ]
+    ],
+    [
+      [
+        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+        {
+          "function": {
+            "contract_fn": {
+              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
+              "function_name": "resolve_market",
+              "args": [
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                },
+                {
+                  "u64": 2
+                },
+                {
+                  "symbol": "yes"
+                }
+              ]
+            }
+          },
+          "sub_invocations": []
+        }
+      ]
+    ],
+    [
+      [
+        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4",
+        {
+          "function": {
+            "contract_fn": {
+              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
+              "function_name": "create_market",
+              "args": [
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
+                },
+                {
+                  "map": [
+                    {
+                      "key": {
+                        "symbol": "category"
+                      },
+                      "val": {
+                        "symbol": "Sports"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "creator_fee_bps"
+                      },
+                      "val": {
+                        "u32": 100
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "description"
+                      },
+                      "val": {
+                        "string": "desc"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "end_time"
+                      },
+                      "val": {
+                        "u64": 5000
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "is_public"
+                      },
+                      "val": {
+                        "bool": true
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "max_stake"
+                      },
+                      "val": {
+                        "i128": {
+                          "hi": 0,
+                          "lo": 100000000
+                        }
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "min_stake"
+                      },
+                      "val": {
+                        "i128": {
+                          "hi": 0,
+                          "lo": 10000000
+                        }
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "outcomes"
+                      },
+                      "val": {
+                        "vec": [
+                          {
+                            "symbol": "yes"
+                          },
+                          {
+                            "symbol": "no"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "resolution_time"
+                      },
+                      "val": {
+                        "u64": 6000
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "title"
+                      },
+                      "val": {
+                        "string": "Test market"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "sub_invocations": []
+        }
+      ]
+    ],
+    [
+      [
+        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+        {
+          "function": {
+            "contract_fn": {
+              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
+              "function_name": "resolve_market",
+              "args": [
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                },
+                {
+                  "u64": 3
+                },
+                {
+                  "symbol": "yes"
                 }
               ]
             }
@@ -378,7 +453,7 @@
   "ledger": {
     "protocol_version": 22,
     "sequence_number": 0,
-    "timestamp": 0,
+    "timestamp": 6000,
     "network_id": "0000000000000000000000000000000000000000000000000000000000000000",
     "base_reserve": 0,
     "min_persistent_entry_ttl": 4096,
@@ -456,55 +531,6 @@
                   "symbol": "CategoryIndex"
                 },
                 {
-                  "symbol": "Crypto"
-                }
-              ]
-            },
-            "durability": "persistent"
-          }
-        },
-        [
-          {
-            "last_modified_ledger_seq": 0,
-            "data": {
-              "contract_data": {
-                "ext": "v0",
-                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
-                "key": {
-                  "vec": [
-                    {
-                      "symbol": "CategoryIndex"
-                    },
-                    {
-                      "symbol": "Crypto"
-                    }
-                  ]
-                },
-                "durability": "persistent",
-                "val": {
-                  "vec": [
-                    {
-                      "u64": 2
-                    }
-                  ]
-                }
-              }
-            },
-            "ext": "v0"
-          },
-          518400
-        ]
-      ],
-      [
-        {
-          "contract_data": {
-            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
-            "key": {
-              "vec": [
-                {
-                  "symbol": "CategoryIndex"
-                },
-                {
                   "symbol": "Sports"
                 }
               ]
@@ -534,6 +560,9 @@
                   "vec": [
                     {
                       "u64": 1
+                    },
+                    {
+                      "u64": 2
                     },
                     {
                       "u64": 3
@@ -712,7 +741,7 @@
                         "symbol": "markets_resolved"
                       },
                       "val": {
-                        "u32": 0
+                        "u32": 3
                       }
                     },
                     {
@@ -720,7 +749,7 @@
                         "symbol": "reputation_score"
                       },
                       "val": {
-                        "u32": 0
+                        "u32": 600
                       }
                     }
                   ]
@@ -798,7 +827,7 @@
                         "symbol": "description"
                       },
                       "val": {
-                        "string": "Daily weather market"
+                        "string": "desc"
                       }
                     },
                     {
@@ -838,7 +867,7 @@
                         "symbol": "is_resolved"
                       },
                       "val": {
-                        "bool": false
+                        "bool": true
                       }
                     },
                     {
@@ -906,7 +935,9 @@
                       "key": {
                         "symbol": "resolved_outcome"
                       },
-                      "val": "void"
+                      "val": {
+                        "symbol": "yes"
+                      }
                     },
                     {
                       "key": {
@@ -921,7 +952,7 @@
                         "symbol": "title"
                       },
                       "val": {
-                        "string": "Will it rain?"
+                        "string": "Test market"
                       }
                     },
                     {
@@ -941,7 +972,7 @@
             },
             "ext": "v0"
           },
-          432000
+          518400
         ]
       ],
       [
@@ -986,7 +1017,7 @@
                         "symbol": "category"
                       },
                       "val": {
-                        "symbol": "Crypto"
+                        "symbol": "Sports"
                       }
                     },
                     {
@@ -1010,7 +1041,7 @@
                         "symbol": "description"
                       },
                       "val": {
-                        "string": "Daily weather market"
+                        "string": "desc"
                       }
                     },
                     {
@@ -1018,7 +1049,7 @@
                         "symbol": "end_time"
                       },
                       "val": {
-                        "u64": 1000
+                        "u64": 3000
                       }
                     },
                     {
@@ -1050,7 +1081,7 @@
                         "symbol": "is_resolved"
                       },
                       "val": {
-                        "bool": false
+                        "bool": true
                       }
                     },
                     {
@@ -1111,21 +1142,23 @@
                         "symbol": "resolution_time"
                       },
                       "val": {
-                        "u64": 2000
+                        "u64": 4000
                       }
                     },
                     {
                       "key": {
                         "symbol": "resolved_outcome"
                       },
-                      "val": "void"
+                      "val": {
+                        "symbol": "yes"
+                      }
                     },
                     {
                       "key": {
                         "symbol": "start_time"
                       },
                       "val": {
-                        "u64": 0
+                        "u64": 2000
                       }
                     },
                     {
@@ -1133,7 +1166,7 @@
                         "symbol": "title"
                       },
                       "val": {
-                        "string": "Will it rain?"
+                        "string": "Test market"
                       }
                     },
                     {
@@ -1153,7 +1186,7 @@
             },
             "ext": "v0"
           },
-          432000
+          518400
         ]
       ],
       [
@@ -1222,7 +1255,7 @@
                         "symbol": "description"
                       },
                       "val": {
-                        "string": "Daily weather market"
+                        "string": "desc"
                       }
                     },
                     {
@@ -1230,7 +1263,7 @@
                         "symbol": "end_time"
                       },
                       "val": {
-                        "u64": 1000
+                        "u64": 5000
                       }
                     },
                     {
@@ -1262,7 +1295,7 @@
                         "symbol": "is_resolved"
                       },
                       "val": {
-                        "bool": false
+                        "bool": true
                       }
                     },
                     {
@@ -1323,21 +1356,23 @@
                         "symbol": "resolution_time"
                       },
                       "val": {
-                        "u64": 2000
+                        "u64": 6000
                       }
                     },
                     {
                       "key": {
                         "symbol": "resolved_outcome"
                       },
-                      "val": "void"
+                      "val": {
+                        "symbol": "yes"
+                      }
                     },
                     {
                       "key": {
                         "symbol": "start_time"
                       },
                       "val": {
-                        "u64": 0
+                        "u64": 4000
                       }
                     },
                     {
@@ -1345,7 +1380,7 @@
                         "symbol": "title"
                       },
                       "val": {
-                        "string": "Will it rain?"
+                        "string": "Test market"
                       }
                     },
                     {
@@ -1365,7 +1400,7 @@
             },
             "ext": "v0"
           },
-          432000
+          518400
         ]
       ],
       [
@@ -1474,7 +1509,7 @@
       [
         {
           "contract_data": {
-            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4",
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
             "key": {
               "ledger_key_nonce": {
                 "nonce": 1033654523790656264
@@ -1489,10 +1524,109 @@
             "data": {
               "contract_data": {
                 "ext": "v0",
-                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
                 "key": {
                   "ledger_key_nonce": {
                     "nonce": 1033654523790656264
+                  }
+                },
+                "durability": "temporary",
+                "val": "void"
+              }
+            },
+            "ext": "v0"
+          },
+          6311999
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+            "key": {
+              "ledger_key_nonce": {
+                "nonce": 2032731177588607455
+              }
+            },
+            "durability": "temporary"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+                "key": {
+                  "ledger_key_nonce": {
+                    "nonce": 2032731177588607455
+                  }
+                },
+                "durability": "temporary",
+                "val": "void"
+              }
+            },
+            "ext": "v0"
+          },
+          6311999
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+            "key": {
+              "ledger_key_nonce": {
+                "nonce": 8370022561469687789
+              }
+            },
+            "durability": "temporary"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+                "key": {
+                  "ledger_key_nonce": {
+                    "nonce": 8370022561469687789
+                  }
+                },
+                "durability": "temporary",
+                "val": "void"
+              }
+            },
+            "ext": "v0"
+          },
+          6311999
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4",
+            "key": {
+              "ledger_key_nonce": {
+                "nonce": 4270020994084947596
+              }
+            },
+            "durability": "temporary"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4",
+                "key": {
+                  "ledger_key_nonce": {
+                    "nonce": 4270020994084947596
                   }
                 },
                 "durability": "temporary",
