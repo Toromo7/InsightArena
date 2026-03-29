@@ -22,6 +22,11 @@ import { ListUsersQueryDto } from './dto/list-users-query.dto';
 import { ActivityLogQueryDto } from './dto/activity-log-query.dto';
 import { StatsResponseDto } from './dto/stats-response.dto';
 import { ResolveMarketDto } from './dto/resolve-market.dto';
+import {
+  ReportFormat,
+  ReportQueryDto,
+  ReportTimeframe,
+} from './dto/report-query.dto';
 
 @Injectable()
 export class AdminService {
@@ -305,5 +310,75 @@ export class AdminService {
     comment.moderation_reason = reason;
 
     return await this.commentsRepository.save(comment);
+  }
+
+  async getActivityReport(query: ReportQueryDto) {
+    const { timeframe, format } = query;
+    const now = new Date();
+    let startDate: Date;
+
+    switch (timeframe) {
+      case ReportTimeframe.Daily:
+        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        break;
+      case ReportTimeframe.Weekly:
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case ReportTimeframe.Monthly:
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    }
+
+    // User Growth
+    const userGrowth = await this.usersRepository.count({
+      where: { created_at: Between(startDate, now) },
+    });
+
+    // Market Creation Trends
+    const marketsCreated = await this.marketsRepository.count({
+      where: { created_at: Between(startDate, now) },
+    });
+
+    // Platform Revenue (accumulated in this period)
+    const volumeResult = (await this.marketsRepository
+      .createQueryBuilder('market')
+      .select('SUM(CAST(market.total_pool_stroops AS DECIMAL))', 'total')
+      .where('market.created_at BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate: now,
+      })
+      .getRawOne()) as { total: string | null };
+
+    const periodVolume = volumeResult?.total || '0';
+    const periodRevenue = (
+      (BigInt(periodVolume.split('.')[0]) * BigInt(2)) /
+      BigInt(100)
+    ).toString();
+
+    // Predictions activity
+    const predictionsCount = await this.predictionsRepository.count({
+      where: { created_at: Between(startDate, now) },
+    });
+
+    const reportData = {
+      timeframe,
+      period_start: startDate.toISOString(),
+      period_end: now.toISOString(),
+      user_growth: userGrowth,
+      markets_created: marketsCreated,
+      total_predictions: predictionsCount,
+      period_volume_stroops: periodVolume,
+      platform_revenue_stroops: periodRevenue,
+    };
+
+    if (format === ReportFormat.CSV) {
+      const headers = Object.keys(reportData).join(',');
+      const values = Object.values(reportData).join(',');
+      return `${headers}\n${values}`;
+    }
+
+    return reportData;
   }
 }
