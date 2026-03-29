@@ -1,11 +1,11 @@
 import {
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    ManyToOne,
-    CreateDateColumn,
-    Index,
-    JoinColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+  Index,
+  JoinColumn,
 } from 'typeorm';
 import { Market } from '../../markets/entities/market.entity';
 
@@ -13,28 +13,28 @@ import { Market } from '../../markets/entities/market.entity';
 @Index(['market', 'recorded_at'])
 @Index(['market'])
 export class MarketHistory {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @ManyToOne(() => Market, { onDelete: 'CASCADE', eager: false })
-    @JoinColumn({ name: 'marketId' })
-    market: Market;
+  @ManyToOne(() => Market, { onDelete: 'CASCADE', eager: false })
+  @JoinColumn({ name: 'marketId' })
+  market: Market;
 
-    @Column({ type: 'timestamptz' })
-    recorded_at: Date;
+  @Column({ type: 'timestamptz' })
+  recorded_at: Date;
 
-    @Column({ default: 0 })
-    prediction_volume: number;
+  @Column({ default: 0 })
+  prediction_volume: number;
 
-    @Column({ type: 'bigint', default: '0' })
-    pool_size_stroops: string;
+  @Column({ type: 'bigint', default: '0' })
+  pool_size_stroops: string;
 
-    @Column({ default: 0 })
-    participant_count: number;
+  @Column({ default: 0 })
+  participant_count: number;
 
-    @Column('simple-array', { nullable: true })
-    outcome_probabilities: string[];
+  @Column('simple-array', { nullable: true })
+  outcome_probabilities: string[];
 
-    @CreateDateColumn()
-    created_at: Date;
+  @CreateDateColumn()
+  created_at: Date;
 }

@@ -44,7 +44,7 @@ export class AnalyticsService {
     private readonly activityLogsRepository: Repository<ActivityLog>,
     @InjectRepository(MarketHistory)
     private readonly marketHistoryRepository: Repository<MarketHistory>,
-  ) { }
+  ) {}
 
   async logActivity(
     userId: string,

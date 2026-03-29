@@ -24,4 +24,4 @@ import { MarketHistory } from './entities/market-history.entity';
   providers: [AnalyticsService],
   exports: [AnalyticsService],
 })
-export class AnalyticsModule { }
+export class AnalyticsModule {}

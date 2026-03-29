@@ -16,7 +16,7 @@ import { MarketHistoryResponseDto } from './dto/market-history.dto';
 @ApiTags('Analytics')
 @Controller('analytics')
 export class AnalyticsController {
-  constructor(private readonly analyticsService: AnalyticsService) { }
+  constructor(private readonly analyticsService: AnalyticsService) {}
 
   @Get('dashboard')
   @ApiBearerAuth()

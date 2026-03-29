@@ -7,15 +7,15 @@ import { AchievementsController } from './achievements.controller';
 import { User } from '../users/entities/user.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Achievement, UserAchievement, User])],
-    providers: [AchievementsService],
-    controllers: [AchievementsController],
-    exports: [AchievementsService],
+  imports: [TypeOrmModule.forFeature([Achievement, UserAchievement, User])],
+  providers: [AchievementsService],
+  controllers: [AchievementsController],
+  exports: [AchievementsService],
 })
 export class AchievementsModule implements OnModuleInit {
-    constructor(private readonly achievementsService: AchievementsService) { }
+  constructor(private readonly achievementsService: AchievementsService) {}
 
-    async onModuleInit(): Promise<void> {
-        await this.achievementsService.initializeAchievements();
-    }
+  async onModuleInit(): Promise<void> {
+    await this.achievementsService.initializeAchievements();
+  }
 }

@@ -2,27 +2,27 @@ import { ApiProperty } from '@nestjs/swagger';
 import { AchievementType } from '../entities/achievement.entity';
 
 export class AchievementResponseDto {
-    @ApiProperty()
-    id: string;
+  @ApiProperty()
+  id: string;
 
-    @ApiProperty({ enum: AchievementType })
-    type: AchievementType;
+  @ApiProperty({ enum: AchievementType })
+  type: AchievementType;
 
-    @ApiProperty()
-    title: string;
+  @ApiProperty()
+  title: string;
 
-    @ApiProperty()
-    description: string;
+  @ApiProperty()
+  description: string;
 
-    @ApiProperty({ nullable: true })
-    icon_url: string | null;
+  @ApiProperty({ nullable: true })
+  icon_url: string | null;
 
-    @ApiProperty()
-    reward_points: number;
+  @ApiProperty()
+  reward_points: number;
 
-    @ApiProperty()
-    is_unlocked: boolean;
+  @ApiProperty()
+  is_unlocked: boolean;
 
-    @ApiProperty({ nullable: true })
-    unlocked_at: Date | null;
+  @ApiProperty({ nullable: true })
+  unlocked_at: Date | null;
 }

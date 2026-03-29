@@ -39,7 +39,7 @@ import { User } from '../users/entities/user.entity';
 @ApiTags('Markets')
 @Controller('markets')
 export class MarketsController {
-  constructor(private readonly marketsService: MarketsService) { }
+  constructor(private readonly marketsService: MarketsService) {}
 
   @Get('templates')
   @Public()
@@ -88,13 +88,18 @@ export class MarketsController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Bulk create prediction markets (max 10 per request)' })
+  @ApiOperation({
+    summary: 'Bulk create prediction markets (max 10 per request)',
+  })
   @ApiResponse({
     status: 201,
     description: 'Markets created',
     type: [Market],
   })
-  @ApiResponse({ status: 400, description: 'Validation error or exceeds limit' })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error or exceeds limit',
+  })
   @ApiResponse({ status: 502, description: 'Soroban contract call failed' })
   async bulkCreateMarkets(
     @Body() dto: BulkCreateMarketsDto,
@@ -174,7 +179,9 @@ export class MarketsController {
 
   @Get(':id/report')
   @Public()
-  @ApiOperation({ summary: 'Generate detailed market report with anonymized predictions' })
+  @ApiOperation({
+    summary: 'Generate detailed market report with anonymized predictions',
+  })
   @ApiResponse({
     status: 200,
     description: 'Market report with outcome distribution and timeline',

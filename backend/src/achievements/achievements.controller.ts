@@ -7,21 +7,21 @@ import { AchievementResponseDto } from './dto/achievement-response.dto';
 @ApiTags('Achievements')
 @Controller('users/:address/achievements')
 export class AchievementsController {
-    constructor(private readonly achievementsService: AchievementsService) { }
+  constructor(private readonly achievementsService: AchievementsService) {}
 
-    @Get()
-    @Public()
-    @HttpCode(HttpStatus.OK)
-    @ApiOperation({ summary: 'Get user achievements and badges' })
-    @ApiResponse({
-        status: 200,
-        description: 'List of achievements with unlock status',
-        type: [AchievementResponseDto],
-    })
-    @ApiResponse({ status: 404, description: 'User not found' })
-    async getUserAchievements(
-        @Param('address') address: string,
-    ): Promise<AchievementResponseDto[]> {
-        return this.achievementsService.getUserAchievements(address);
-    }
+  @Get()
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get user achievements and badges' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of achievements with unlock status',
+    type: [AchievementResponseDto],
+  })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async getUserAchievements(
+    @Param('address') address: string,
+  ): Promise<AchievementResponseDto[]> {
+    return this.achievementsService.getUserAchievements(address);
+  }
 }

@@ -37,7 +37,7 @@ export class MarketsService {
     private readonly usersService: UsersService,
     private readonly sorobanService: SorobanService,
     private readonly dataSource: DataSource,
-  ) { }
+  ) {}
 
   /**
    * Get prediction statistics for a market - anonymous outcome counts only
