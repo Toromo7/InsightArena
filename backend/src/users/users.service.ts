@@ -16,6 +16,14 @@ import {
   ListUserCompetitionsDto,
   UserCompetitionFilterStatus,
 } from './dto/list-user-competitions.dto';
+import { Market } from '../markets/entities/market.entity';
+import {
+  ListUserMarketsDto,
+  PaginatedUserMarketsResponse,
+  UserMarketFilterStatus,
+  UserMarketsSortBy,
+  UserMarketsSortOrder,
+} from './dto/list-user-markets.dto';
 
 @Injectable()
 export class UsersService {
@@ -27,6 +35,8 @@ export class UsersService {
 
     @InjectRepository(CompetitionParticipant)
     private readonly participantsRepository: Repository<CompetitionParticipant>,
+    @InjectRepository(Market)
+    private readonly marketsRepository: Repository<Market>,
   ) {}
 
   async findAll(): Promise<User[]> {
@@ -165,6 +175,52 @@ export class UsersService {
       end_time: p.competition.end_time,
       status: p.competition.end_time < now ? 'completed' : 'active',
     }));
+
+    return { data, total, page, limit };
+  }
+
+  async findMarketsByAddress(
+    stellar_address: string,
+    dto: ListUserMarketsDto,
+  ): Promise<PaginatedUserMarketsResponse> {
+    const user = await this.findByAddress(stellar_address);
+    const page = dto.page ?? 1;
+    const limit = Math.min(dto.limit ?? 20, 50);
+    const skip = (page - 1) * limit;
+
+    const qb = this.marketsRepository
+      .createQueryBuilder('market')
+      .leftJoinAndSelect('market.creator', 'creator')
+      .where('market.creatorId = :userId', { userId: user.id });
+
+    if (dto.status) {
+      switch (dto.status) {
+        case UserMarketFilterStatus.Active:
+          qb.andWhere(
+            'market.is_resolved = false AND market.is_cancelled = false',
+          );
+          break;
+        case UserMarketFilterStatus.Resolved:
+          qb.andWhere('market.is_resolved = true');
+          break;
+        case UserMarketFilterStatus.Cancelled:
+          qb.andWhere('market.is_cancelled = true');
+          break;
+      }
+    }
+
+    const sortColumn =
+      dto.sort_by === UserMarketsSortBy.ParticipantCount
+        ? 'market.participant_count'
+        : 'market.created_at';
+    const sortDir =
+      (dto.order ?? UserMarketsSortOrder.Desc) === UserMarketsSortOrder.Asc
+        ? 'ASC'
+        : 'DESC';
+
+    qb.orderBy(sortColumn, sortDir).skip(skip).take(limit);
+
+    const [data, total] = await qb.getManyAndCount();
 
     return { data, total, page, limit };
   }

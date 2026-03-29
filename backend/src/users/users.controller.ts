@@ -23,6 +23,10 @@ import {
 } from './dto/list-user-predictions.dto';
 
 import { ListUserCompetitionsDto } from './dto/list-user-competitions.dto';
+import {
+  ListUserMarketsDto,
+  PaginatedUserMarketsResponse,
+} from './dto/list-user-markets.dto';
 
 @Controller('users')
 export class UsersController {
@@ -90,6 +94,21 @@ export class UsersController {
     @Query() query: ListUserPredictionsDto,
   ): Promise<PaginatedPublicUserPredictionsResponse> {
     return this.usersService.findPublicPredictionsByAddress(address, query);
+  }
+
+  @Get(':address/markets')
+  @Public()
+  @UsePipes(
+    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: false }),
+  )
+  @ApiOperation({ summary: "List markets created by a user (public)" })
+  @ApiResponse({ status: 200, description: 'Paginated markets list' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async getUserMarkets(
+    @Param('address') address: string,
+    @Query() query: ListUserMarketsDto,
+  ): Promise<PaginatedUserMarketsResponse> {
+    return this.usersService.findMarketsByAddress(address, query);
   }
 
   @Get(':address/competitions')
