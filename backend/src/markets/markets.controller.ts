@@ -21,6 +21,7 @@ import {
 import { MarketsService } from './markets.service';
 import { Market } from './entities/market.entity';
 import { Comment } from './entities/comment.entity';
+import { MarketTemplate } from './entities/market-template.entity';
 import { CreateMarketDto } from './dto/create-market.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import {
@@ -37,6 +38,18 @@ import { User } from '../users/entities/user.entity';
 @Controller('markets')
 export class MarketsController {
   constructor(private readonly marketsService: MarketsService) {}
+
+  @Get('templates')
+  @Public()
+  @ApiOperation({ summary: 'List predefined market templates' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of market templates',
+    type: [MarketTemplate],
+  })
+  async getTemplates(): Promise<MarketTemplate[]> {
+    return this.marketsService.getTemplates();
+  }
 
   @Get(':id/predictions')
   @Public()

@@ -11,6 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Market } from './entities/market.entity';
 import { Comment } from './entities/comment.entity';
+import { MarketTemplate } from './entities/market-template.entity';
 import { CreateMarketDto } from './dto/create-market.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UsersService } from '../users/users.service';
@@ -31,6 +32,8 @@ export class MarketsService {
     private readonly marketsRepository: Repository<Market>,
     @InjectRepository(Comment)
     private readonly commentsRepository: Repository<Comment>,
+    @InjectRepository(MarketTemplate)
+    private readonly marketTemplatesRepository: Repository<MarketTemplate>,
     private readonly usersService: UsersService,
     private readonly sorobanService: SorobanService,
   ) {}
@@ -337,5 +340,14 @@ export class MarketsService {
     });
 
     return roots;
+  }
+
+  /**
+   * Get all market templates
+   */
+  async getTemplates(): Promise<MarketTemplate[]> {
+    return this.marketTemplatesRepository.find({
+      order: { category: 'ASC', title: 'ASC' },
+    });
   }
 }
