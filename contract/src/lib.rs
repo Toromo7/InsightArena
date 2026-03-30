@@ -23,7 +23,6 @@ pub mod ttl;
 pub use crate::config::Config;
 pub use crate::errors::InsightArenaError;
 pub use crate::governance::{Proposal, ProposalType};
-pub use crate::liquidity;
 pub use crate::liquidity::{calculate_lp_tokens, calculate_liquidity_value, calculate_swap_output};
 pub use crate::market::CreateMarketParams;
 pub use crate::storage_types::{
