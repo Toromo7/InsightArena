@@ -2,6 +2,7 @@
 #![allow(non_snake_case)]
 
 pub mod analytics;
+pub mod conditional;
 pub mod config;
 pub mod dispute;
 pub mod errors;
@@ -171,6 +172,18 @@ impl InsightArenaContract {
         market_id: u64,
     ) -> Result<(), InsightArenaError> {
         market::cancel_market(&env, caller, market_id)
+    }
+
+    // ── Conditional Markets ───────────────────────────────────────────────────
+
+    pub fn create_conditional_market(
+        env: Env,
+        creator: Address,
+        parent_market_id: u64,
+        required_outcome: Symbol,
+        params: CreateMarketParams,
+    ) -> Result<u64, InsightArenaError> {
+        conditional::create_conditional_market(&env, creator, parent_market_id, required_outcome, params)
     }
 
     // ── Dispute ───────────────────────────────────────────────────────────────
