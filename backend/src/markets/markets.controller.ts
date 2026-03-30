@@ -207,4 +207,22 @@ export class MarketsController {
   async getMarketReport(@Param('id') id: string): Promise<any> {
     return this.marketsService.generateMarketReport(id);
   }
+
+  @Post(':id/bookmark')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Bookmark a market' })
+  @ApiResponse({ status: 201, description: 'Market bookmarked' })
+  @ApiResponse({ status: 404, description: 'Market not found' })
+  async bookmarkMarket(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.marketsService.addBookmark(id, user);
+  }
+
+  @Delete(':id/bookmark')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Remove a market bookmark' })
+  @ApiResponse({ status: 200, description: 'Bookmark removed' })
+  @ApiResponse({ status: 404, description: 'Market not found' })
+  async removeBookmark(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.marketsService.removeBookmark(id, user);
+  }
 }

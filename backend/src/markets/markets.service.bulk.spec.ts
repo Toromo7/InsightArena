@@ -10,6 +10,7 @@ import { SorobanService } from '../soroban/soroban.service';
 import { UsersService } from '../users/users.service';
 import { User } from '../users/entities/user.entity';
 import { CreateMarketDto } from './dto/create-market.dto';
+import { UserBookmark } from './entities/user-bookmark.entity';
 
 describe('MarketsService - Bulk Creation', () => {
   let service: MarketsService;
@@ -82,6 +83,15 @@ describe('MarketsService - Bulk Creation', () => {
           useValue: {},
         },
         {
+          provide: getRepositoryToken(UserBookmark),
+          useValue: {
+            findOne: jest.fn(),
+            create: jest.fn(),
+            save: jest.fn(),
+            delete: jest.fn(),
+          },
+        },
+        {
           provide: UsersService,
           useValue: {},
         },
@@ -121,7 +131,7 @@ describe('MarketsService - Bulk Creation', () => {
     const dtos = [makeCreateDto(), makeCreateDto()];
     const mockQueryRunner = dataSource.createQueryRunner();
 
-    mockQueryRunner.manager.create.mockImplementation(
+    (mockQueryRunner.manager.create as jest.Mock).mockImplementation(
       (entity, data) =>
         ({
           ...data,
@@ -129,7 +139,7 @@ describe('MarketsService - Bulk Creation', () => {
         }) as Market,
     );
 
-    mockQueryRunner.manager.save.mockResolvedValue({
+    (mockQueryRunner.manager.save as jest.Mock).mockResolvedValue({
       id: 'market-123',
       on_chain_market_id: 'market_123',
     } as Market);

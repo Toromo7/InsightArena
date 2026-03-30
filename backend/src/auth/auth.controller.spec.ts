@@ -4,6 +4,7 @@ import { User } from '../users/entities/user.entity';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { VerifyChallengeDto } from './dto/verify-challenge.dto';
+import { RateLimitService } from './rate-limit.service';
 
 const mockAuthService = () => ({
   generateChallenge: jest
@@ -22,7 +23,13 @@ describe('AuthController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: mockAuthService() }],
+      providers: [
+        { provide: AuthService, useValue: mockAuthService() },
+        {
+          provide: RateLimitService,
+          useValue: { getRateLimitStatus: jest.fn() },
+        },
+      ],
     }).compile();
 
     controller = module.get<AuthController>(AuthController);

@@ -25,6 +25,11 @@ import {
   UserMarketsSortBy,
   UserMarketsSortOrder,
 } from './dto/list-user-markets.dto';
+import { UserBookmark } from '../markets/entities/user-bookmark.entity';
+import {
+  ListUserBookmarksDto,
+  PaginatedUserBookmarksResponse,
+} from './dto/list-user-bookmarks.dto';
 
 @Injectable()
 export class UsersService {
@@ -39,6 +44,8 @@ export class UsersService {
     private readonly notificationsRepository: Repository<Notification>,
     @InjectRepository(CompetitionParticipant)
     private readonly participantsRepository: Repository<CompetitionParticipant>,
+    @InjectRepository(UserBookmark)
+    private readonly userBookmarksRepository: Repository<UserBookmark>,
   ) {}
 
   async findAll(): Promise<User[]> {
@@ -223,6 +230,31 @@ export class UsersService {
     qb.orderBy(sortColumn, sortDir).skip(skip).take(limit);
 
     const [data, total] = await qb.getManyAndCount();
+
+    return { data, total, page, limit };
+  }
+
+  async findUserBookmarks(
+    userId: string,
+    dto: ListUserBookmarksDto,
+  ): Promise<PaginatedUserBookmarksResponse> {
+    const page = dto.page ?? 1;
+    const limit = Math.min(dto.limit ?? 20, 50);
+    const skip = (page - 1) * limit;
+
+    const [bookmarks, total] = await this.userBookmarksRepository.findAndCount({
+      where: { user: { id: userId } },
+      relations: ['market'],
+      order: { created_at: 'DESC' },
+      skip,
+      take: limit,
+    });
+
+    const data = bookmarks.map((b) => ({
+      id: b.id,
+      market: b.market,
+      created_at: b.created_at,
+    }));
 
     return { data, total, page, limit };
   }

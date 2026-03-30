@@ -16,6 +16,7 @@ import { CreateMarketDto } from './dto/create-market.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UsersService } from '../users/users.service';
 import { User } from '../users/entities/user.entity';
+import { UserBookmark } from './entities/user-bookmark.entity';
 import {
   ListMarketsDto,
   MarketStatus,
@@ -44,6 +45,8 @@ export class MarketsService {
     private readonly commentsRepository: Repository<Comment>,
     @InjectRepository(MarketTemplate)
     private readonly marketTemplatesRepository: Repository<MarketTemplate>,
+    @InjectRepository(UserBookmark)
+    private readonly userBookmarksRepository: Repository<UserBookmark>,
     private readonly usersService: UsersService,
     private readonly sorobanService: SorobanService,
     private readonly dataSource: DataSource,
@@ -585,5 +588,33 @@ export class MarketsService {
       ),
       generated_at: new Date(),
     };
+  }
+
+  async addBookmark(marketId: string, user: User): Promise<UserBookmark> {
+    const market = await this.findByIdOrOnChainId(marketId);
+
+    const existing = await this.userBookmarksRepository.findOne({
+      where: { user: { id: user.id }, market: { id: market.id } },
+    });
+
+    if (existing) {
+      return existing; // already bookmarked
+    }
+
+    const bookmark = this.userBookmarksRepository.create({
+      user,
+      market,
+    });
+
+    return await this.userBookmarksRepository.save(bookmark);
+  }
+
+  async removeBookmark(marketId: string, user: User): Promise<void> {
+    const market = await this.findByIdOrOnChainId(marketId);
+
+    await this.userBookmarksRepository.delete({
+      user: { id: user.id },
+      market: { id: market.id },
+    });
   }
 }

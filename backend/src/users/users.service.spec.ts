@@ -16,6 +16,7 @@ import {
   UserMarketsSortBy,
   UserMarketsSortOrder,
 } from './dto/list-user-markets.dto';
+import { UserBookmark } from '../markets/entities/user-bookmark.entity';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -81,6 +82,16 @@ describe('UsersService', () => {
           useValue: {
             createQueryBuilder: jest.fn(),
             find: jest.fn(),
+          },
+        },
+        {
+          provide: getRepositoryToken(UserBookmark),
+          useValue: {
+            findAndCount: jest.fn(),
+            findOne: jest.fn(),
+            create: jest.fn(),
+            save: jest.fn(),
+            delete: jest.fn(),
           },
         },
       ],

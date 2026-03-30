@@ -21,6 +21,11 @@ import {
   ListUserPredictionsDto,
   PaginatedPublicUserPredictionsResponse,
 } from './dto/list-user-predictions.dto';
+import {
+  ListUserBookmarksDto,
+  PaginatedUserBookmarksResponse,
+} from './dto/list-user-bookmarks.dto';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 import { ListUserCompetitionsDto } from './dto/list-user-competitions.dto';
 import {
@@ -44,6 +49,20 @@ export class UsersController {
     return plainToInstance(UserResponseDto, user, {
       excludeExtraneousValues: true,
     });
+  }
+
+  @Get('me/bookmarks')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get favorite markets for current user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated user bookmarks',
+  })
+  async getUserBookmarks(
+    @CurrentUser() user: User,
+    @Query() query: ListUserBookmarksDto,
+  ): Promise<PaginatedUserBookmarksResponse> {
+    return this.usersService.findUserBookmarks(user.id, query);
   }
 
   @Patch('me')

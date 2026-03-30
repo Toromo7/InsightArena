@@ -10,6 +10,7 @@ import { Comment } from './entities/comment.entity';
 import { MarketTemplate } from './entities/market-template.entity';
 import { CreateMarketDto } from './dto/create-market.dto';
 import { MarketsService } from './markets.service';
+import { UserBookmark } from './entities/user-bookmark.entity';
 
 type MockRepo = jest.Mocked<
   Pick<Repository<Market>, 'create' | 'save' | 'findOne' | 'find'>
@@ -82,6 +83,15 @@ describe('MarketsService', () => {
         {
           provide: getRepositoryToken(MarketTemplate),
           useValue: marketsRepository,
+        },
+        {
+          provide: getRepositoryToken(UserBookmark),
+          useValue: {
+            findOne: jest.fn(),
+            create: jest.fn(),
+            save: jest.fn(),
+            delete: jest.fn(),
+          },
         },
         {
           provide: UsersService,

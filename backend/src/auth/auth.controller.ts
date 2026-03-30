@@ -1,16 +1,35 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+} from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
+import { RateLimitService } from './rate-limit.service';
 import { GenerateChallengeDto } from './dto/generate-challenge.dto';
 import { VerifyChallengeDto } from './dto/verify-challenge.dto';
 import { VerifyWalletDto } from './dto/verify-wallet.dto';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { RateLimitStatusDto } from './dto/rate-limit-status.dto';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { User } from '../users/entities/user.entity';
 
 @ApiTags('Auth')
 @Throttle({ default: { limit: 10, ttl: 60000 } })
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly rateLimitService: RateLimitService,
+  ) {}
 
   @Post('challenge')
   @HttpCode(HttpStatus.OK)
@@ -41,5 +60,22 @@ export class AuthController {
       dto.signature,
     );
     return { verified };
+  }
+
+  @Get('rate-limit')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get current rate limit status for authenticated user',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Current rate limit status',
+    type: RateLimitStatusDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getRateLimitStatus(
+    @CurrentUser() user: User,
+  ): Promise<RateLimitStatusDto> {
+    return this.rateLimitService.getStatus(user.id);
   }
 }

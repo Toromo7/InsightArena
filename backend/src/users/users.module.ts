@@ -7,6 +7,7 @@ import { Prediction } from '../predictions/entities/prediction.entity';
 import { CompetitionParticipant } from '../competitions/entities/competition-participant.entity';
 import { Market } from '../markets/entities/market.entity';
 import { Notification } from '../notifications/entities/notification.entity';
+import { UserBookmark } from '../markets/entities/user-bookmark.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { Notification } from '../notifications/entities/notification.entity';
       CompetitionParticipant,
       Market,
       Notification,
+      UserBookmark,
     ]),
   ],
   controllers: [UsersController],
