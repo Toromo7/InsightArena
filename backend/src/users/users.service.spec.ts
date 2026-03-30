@@ -4,6 +4,8 @@ import { NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
+import { UserPreferences } from './entities/user-preferences.entity';
+import { UserFollow } from './entities/user-follow.entity';
 import { Prediction } from '../predictions/entities/prediction.entity';
 import { Market } from '../markets/entities/market.entity';
 import { Notification } from '../notifications/entities/notification.entity';
@@ -54,6 +56,21 @@ describe('UsersService', () => {
             findOneBy: jest.fn(),
             save: jest.fn(),
             find: jest.fn(),
+          },
+        },
+        {
+          provide: getRepositoryToken(UserPreferences),
+          useValue: {
+            findOneBy: jest.fn(),
+            save: jest.fn(),
+          },
+        },
+        {
+          provide: getRepositoryToken(UserFollow),
+          useValue: {
+            find: jest.fn(),
+            delete: jest.fn(),
+            save: jest.fn(),
           },
         },
         {

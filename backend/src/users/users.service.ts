@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Prediction } from '../predictions/entities/prediction.entity';
@@ -314,9 +318,7 @@ export class UsersService {
     };
   }
 
-  async getOrCreatePreferences(
-    userId: string,
-  ): Promise<UserPreferences> {
+  async getOrCreatePreferences(userId: string): Promise<UserPreferences> {
     let prefs = await this.preferencesRepository.findOne({
       where: { userId },
     });
@@ -357,8 +359,7 @@ export class UsersService {
     return {
       id: updated.id,
       email_notifications: updated.email_notifications,
-      market_resolution_notifications:
-        updated.market_resolution_notifications,
+      market_resolution_notifications: updated.market_resolution_notifications,
       competition_notifications: updated.competition_notifications,
       leaderboard_notifications: updated.leaderboard_notifications,
       marketing_emails: updated.marketing_emails,
@@ -398,7 +399,6 @@ export class UsersService {
     followerId: string,
     followingAddress: string,
   ): Promise<{ success: boolean; message: string }> {
-    const follower = await this.findById(followerId);
     const following = await this.findByAddress(followingAddress);
 
     const result = await this.followRepository.delete({

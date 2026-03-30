@@ -343,7 +343,9 @@ export class AnalyticsService {
     return trend;
   }
 
-  private computeProfitLossTrend(predictions: Prediction[]): TrendDataPointDto[] {
+  private computeProfitLossTrend(
+    predictions: Prediction[],
+  ): TrendDataPointDto[] {
     const trend: TrendDataPointDto[] = [];
     let cumulativePnL = 0n;
 

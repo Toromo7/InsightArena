@@ -76,7 +76,9 @@ export class AnalyticsController {
     type: UserTrendsDto,
   })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async getUserTrends(@Param('address') address: string): Promise<UserTrendsDto> {
+  async getUserTrends(
+    @Param('address') address: string,
+  ): Promise<UserTrendsDto> {
     return this.analyticsService.getUserTrends(address);
   }
 
