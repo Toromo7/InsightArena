@@ -617,7 +617,6 @@ export class MarketsService {
   }
 
   /**
-<<<<<<< HEAD
    * Get featured markets
    */
   async findFeaturedMarkets(
