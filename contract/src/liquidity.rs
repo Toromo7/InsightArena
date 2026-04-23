@@ -442,6 +442,36 @@ pub fn get_lp_position_public(
     get_lp_position(env, &provider, market_id)
 }
 
+pub fn get_all_lp_providers(env: &Env, market_id: u64) -> Vec<LPPosition> {
+    let providers: Vec<Address> = env
+        .storage()
+        .persistent()
+        .get(&DataKey::LPProviderList(market_id))
+        .unwrap_or_else(|| Vec::new(env));
+
+    if env
+        .storage()
+        .persistent()
+        .has(&DataKey::LPProviderList(market_id))
+    {
+        bump_lp_provider_list(env, market_id);
+    }
+
+    let mut positions = Vec::new(env);
+    for provider in providers.iter() {
+        if let Some(position) = env
+            .storage()
+            .persistent()
+            .get::<DataKey, LPPosition>(&DataKey::LPPosition(market_id, provider.clone()))
+        {
+            positions.push_back(position);
+            bump_lp_position(env, market_id, &provider);
+        }
+    }
+
+    positions
+}
+
 /// Withdraw accumulated trading fees for a liquidity provider
 pub fn collect_lp_fees(
     env: &Env,

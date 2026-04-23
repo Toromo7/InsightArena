@@ -574,6 +574,11 @@ impl InsightArenaContract {
         liquidity::get_lp_position_public(&env, provider, market_id)
     }
 
+    /// Get all active LP positions for a market.
+    pub fn get_all_lp_providers(env: Env, market_id: u64) -> Vec<crate::storage_types::LPPosition> {
+        liquidity::get_all_lp_providers(&env, market_id)
+    }
+
     /// Extends analytics to expose 24-hour pool trading volume.
     pub fn get_pool_volume_24h(env: Env, market_id: u64) -> i128 {
         liquidity::get_pool_volume_24h(&env, market_id)
