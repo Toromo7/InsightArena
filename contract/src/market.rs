@@ -620,34 +620,9 @@ pub fn create_conditional_market(
     required_outcome: Symbol,
     params: CreateMarketParams,
 ) -> Result<u64, InsightArenaError> {
-    let parent_market: Market = env
-        .storage()
-        .persistent()
-        .get(&DataKey::Market(parent_market_id))
-        .ok_or(InsightArenaError::MarketNotFound)?;
+    validate_conditional_params(env, parent_market_id, &required_outcome, &params)?;
 
-    if parent_market.is_resolved {
-        return Err(InsightArenaError::MarketExpired);
-    }
-
-    if !parent_market
-        .outcome_options
-        .contains(required_outcome.clone())
-    {
-        return Err(InsightArenaError::InvalidOutcome);
-    }
-
-    let mut depth = 1;
-    if let Some(parent_cond) = env
-        .storage()
-        .persistent()
-        .get::<_, ConditionalMarket>(&DataKey::ConditionalMarket(parent_market_id))
-    {
-        depth = parent_cond.conditional_depth + 1;
-        if depth > MAX_CONDITIONAL_DEPTH {
-            return Err(InsightArenaError::ConditionalDepthExceeded);
-        }
-    }
+    let depth = calculate_conditional_depth(env, parent_market_id)?;
 
     let market_id = create_market(env, creator, params)?;
 
@@ -772,8 +747,56 @@ pub fn get_conditional_chain(
     Ok(chain)
 }
 
-// TODO: validate_conditional_params
-// TODO: calculate_conditional_depth / validate_no_circular_dependency
+fn calculate_conditional_depth(env: &Env, parent_market_id: u64) -> Result<u32, InsightArenaError> {
+    let mut depth = 1;
+    if let Some(parent_cond) = env
+        .storage()
+        .persistent()
+        .get::<_, ConditionalMarket>(&DataKey::ConditionalMarket(parent_market_id))
+    {
+        depth = parent_cond
+            .conditional_depth
+            .checked_add(1)
+            .ok_or(InsightArenaError::Overflow)?;
+    }
+
+    if depth > MAX_CONDITIONAL_DEPTH {
+        return Err(InsightArenaError::ConditionalDepthExceeded);
+    }
+
+    Ok(depth)
+}
+
+fn validate_conditional_params(
+    env: &Env,
+    parent_market_id: u64,
+    required_outcome: &Symbol,
+    params: &CreateMarketParams,
+) -> Result<(), InsightArenaError> {
+    let parent_market: Market = env
+        .storage()
+        .persistent()
+        .get(&DataKey::Market(parent_market_id))
+        .ok_or(InsightArenaError::MarketNotFound)?;
+
+    if parent_market.is_resolved || parent_market.is_cancelled {
+        return Err(InsightArenaError::MarketExpired);
+    }
+
+    if !parent_market.outcome_options.contains(required_outcome.clone()) {
+        return Err(InsightArenaError::InvalidOutcome);
+    }
+
+    if params.end_time <= parent_market.resolution_time {
+        return Err(InsightArenaError::InvalidTimeRange);
+    }
+
+    if params.resolution_time <= params.end_time {
+        return Err(InsightArenaError::InvalidTimeRange);
+    }
+
+    Ok(())
+}
 
 fn activate_conditional_market(env: &Env, market_id: u64) -> Result<(), InsightArenaError> {
     let mut conditional: ConditionalMarket = env
