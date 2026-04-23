@@ -6,7 +6,6 @@ import {
   Competition,
   CompetitionVisibility,
 } from './entities/competition.entity';
-import { CompetitionsService } from './competitions.service';
 import { CreateCompetitionDto } from './dto/create-competition.dto';
 import { UserRankResponseDto } from './dto/user-rank-response.dto';
 import { User } from '../users/entities/user.entity';
@@ -43,6 +42,8 @@ describe('CompetitionsController', () => {
             findById: jest.fn(),
             list: jest.fn(),
             getMyRank: jest.fn(),
+            joinCompetition: jest.fn(),
+            leave: jest.fn(),
           },
         },
       ],
@@ -147,6 +148,33 @@ describe('CompetitionsController', () => {
 
       await expect(
         controller.getMyRank('nonexistent', mockUser as User),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('leaveCompetition', () => {
+    it('should successfully leave competition', async () => {
+      const spy = jest.spyOn(service, 'leave').mockResolvedValue(undefined);
+
+      const result = await controller.leaveCompetition(
+        'comp-uuid-1',
+        mockUser as User,
+      );
+
+      expect(spy).toHaveBeenCalledWith('comp-uuid-1', mockUser.id);
+      expect(result).toEqual({
+        message: 'Successfully left competition',
+        competition_id: 'comp-uuid-1',
+      });
+    });
+
+    it('should throw error if service throws it', async () => {
+      jest
+        .spyOn(service, 'leave')
+        .mockRejectedValue(new NotFoundException('Not found'));
+
+      await expect(
+        controller.leaveCompetition('nonexistent', mockUser as User),
       ).rejects.toThrow(NotFoundException);
     });
   });
