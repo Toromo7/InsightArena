@@ -220,3 +220,42 @@ pub fn execute_proposal(
     emit_proposal_executed(env, proposal_id, summary);
     Ok(())
 }
+
+/// Return a paginated slice of proposals in creation order.
+///
+/// - `start` is the 1-based proposal ID to begin from (inclusive).
+/// - `limit` is capped at 50 to bound simulation cost.
+/// - Proposals missing from storage are silently skipped.
+/// - Returns an empty `Vec` when no proposals exist or `start` exceeds the count.
+pub fn list_proposals(env: &Env, start: u32, limit: u32) -> Vec<Proposal> {
+    const MAX_LIMIT: u32 = 50;
+    let effective_limit = if limit > MAX_LIMIT { MAX_LIMIT } else { limit };
+
+    let total: u32 = env
+        .storage()
+        .persistent()
+        .get::<DataKey, u32>(&DataKey::ProposalCount)
+        .unwrap_or(0);
+
+    let mut result: Vec<Proposal> = Vec::new(env);
+
+    if start == 0 || start > total || effective_limit == 0 {
+        return result;
+    }
+
+    let end = total.min(start.saturating_add(effective_limit).saturating_sub(1));
+    let mut id = start;
+
+    while id <= end {
+        if let Some(proposal) = env
+            .storage()
+            .persistent()
+            .get::<DataKey, Proposal>(&DataKey::Proposal(id))
+        {
+            result.push_back(proposal);
+        }
+        id += 1;
+    }
+
+    result
+}

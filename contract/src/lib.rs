@@ -310,6 +310,12 @@ impl InsightArenaContract {
         governance::execute_proposal(&env, executor, proposal_id)
     }
 
+    /// Return a paginated list of governance proposals in creation order.
+    /// `start` is 1-based; `limit` is capped at 50.
+    pub fn list_proposals(env: Env, start: u32, limit: u32) -> Vec<Proposal> {
+        governance::list_proposals(&env, start, limit)
+    }
+
     /// Return the total protocol fees accumulated in the treasury.
     pub fn get_treasury_balance(env: Env) -> i128 {
         escrow::get_treasury_balance(&env)
