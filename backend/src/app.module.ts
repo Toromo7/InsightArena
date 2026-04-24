@@ -27,6 +27,7 @@ import { SearchModule } from './search/search.module';
 import { SeasonsModule } from './seasons/seasons.module';
 import { SorobanModule } from './soroban/soroban.module';
 import { UsersModule } from './users/users.module';
+import { DisputesModule } from './disputes/disputes.module';
 
 @Module({
   imports: [
@@ -84,6 +85,7 @@ import { UsersModule } from './users/users.module';
     SearchModule,
     CommonModule,
     FlagsModule,
+    DisputesModule,
   ],
 
   controllers: [AppController],
