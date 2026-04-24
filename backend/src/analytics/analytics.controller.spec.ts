@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AnalyticsController } from './analytics.controller';
 import { AnalyticsService } from './analytics.service';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { UserTrendsDto } from './dto/user-trends.dto';
 
 describe('AnalyticsController', () => {
@@ -50,6 +51,14 @@ describe('AnalyticsController', () => {
             getMarketHistory: jest.fn(),
             getDashboard: jest.fn(),
             getCategoryAnalytics: jest.fn(),
+          },
+        },
+        {
+          provide: CACHE_MANAGER,
+          useValue: {
+            get: jest.fn(),
+            set: jest.fn(),
+            del: jest.fn(),
           },
         },
       ],
@@ -102,6 +111,30 @@ describe('AnalyticsController', () => {
       const result = await controller.getUserTrends('GABC123', 30);
 
       expect(result.accuracy_trend.length).toBe(30);
+    });
+  });
+
+  describe('getCategoryAnalytics', () => {
+    it('should return category analytics', async () => {
+      const mockCategoryAnalytics = {
+        categories: [
+          {
+            name: 'Politics',
+            total_markets: 10,
+            active_markets: 5,
+            total_volume_stroops: '1000000',
+            avg_participants: 20,
+            trending: true,
+          },
+        ],
+        generated_at: new Date(),
+      };
+      service.getCategoryAnalytics.mockResolvedValue(mockCategoryAnalytics);
+
+      const result = await controller.getCategoryAnalytics();
+
+      expect(result).toEqual(mockCategoryAnalytics);
+      expect(service.getCategoryAnalytics).toHaveBeenCalled();
     });
   });
 });

@@ -9,8 +9,10 @@ import {
   Query,
   Request,
   UseGuards,
+  UseInterceptors,
   Response as ExpressResponse,
 } from '@nestjs/common';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -36,6 +38,9 @@ export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Get('dashboard/stats')
+  @Roles(Role.Admin, Role.Moderator)
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(60) // 1 minute
   async getDashboardStats(): Promise<StatsResponseDto> {
     return this.adminService.getStats();
   }
@@ -105,11 +110,13 @@ export class AdminController {
   }
 
   @Get('flags')
+  @Roles(Role.Admin, Role.Moderator)
   async listFlags(@Query() query: ListFlagsQueryDto) {
     return this.adminService.listFlags(query);
   }
 
   @Patch('flags/:id/resolve')
+  @Roles(Role.Admin, Role.Moderator)
   async resolveFlag(
     @Param('id') id: string,
     @Body() dto: ResolveFlagDto,

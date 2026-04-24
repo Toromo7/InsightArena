@@ -495,7 +495,13 @@ export class AnalyticsService {
     });
 
     return {
-      categories: categories.sort((a, b) => b.total_markets - a.total_markets),
+      categories: categories.sort((a, b) => {
+        const volA = BigInt(a.total_volume_stroops);
+        const volB = BigInt(b.total_volume_stroops);
+        if (volA > volB) return -1;
+        if (volA < volB) return 1;
+        return 0;
+      }),
       generated_at: new Date(),
     };
   }

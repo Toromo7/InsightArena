@@ -1,4 +1,5 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseInterceptors } from '@nestjs/common';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -92,6 +93,8 @@ export class AnalyticsController {
 
   @Get('categories')
   @Public()
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(600) // 10 minutes
   @ApiOperation({ summary: 'Get category analytics and statistics' })
   @ApiResponse({
     status: 200,
