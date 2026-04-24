@@ -198,8 +198,7 @@ export class AnalyticsService {
     marketId: string,
     from?: string,
     to?: string,
-    interval: 'hourly' | 'daily' = 'daily',
-  ): Promise<any[]> {
+  ): Promise<MarketHistoryResponseDto> {
     const market = await this.marketsRepository.findOne({
       where: [{ id: marketId }, { on_chain_market_id: marketId }],
     });
@@ -228,14 +227,20 @@ export class AnalyticsService {
 
     const history = await qb.getMany();
 
-    return history.map((h) => ({
-      recorded_at: h.recorded_at,
-      pool_size_stroops: h.pool_size_stroops,
-      participant_count: h.participant_count,
-      outcome_probabilities: h.outcome_probabilities
-        ? h.outcome_probabilities.map((p) => parseFloat(p))
-        : null,
-    }));
+    return {
+      market_id: market.id,
+      title: market.title,
+      history: history.map((h) => ({
+        timestamp: h.recorded_at,
+        prediction_volume: h.prediction_volume,
+        pool_size_stroops: h.pool_size_stroops,
+        participant_count: h.participant_count,
+        outcome_probabilities: h.outcome_probabilities
+          ? h.outcome_probabilities.map((p) => parseFloat(p))
+          : null,
+      })),
+      generated_at: new Date(),
+    };
   }
 
   /**

@@ -37,6 +37,7 @@ describe('LeaderboardController', () => {
           useValue: {
             getLeaderboard: jest.fn(),
             getUserRank: jest.fn(),
+            getHistoryForAddress: jest.fn(),
           },
         },
       ],
