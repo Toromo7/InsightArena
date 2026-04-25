@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table, Index } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table, TableIndex } from 'typeorm';
 
 export class CreateDisputesTable1775500000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -106,22 +106,22 @@ export class CreateDisputesTable1775500000000 implements MigrationInterface {
     // Create indexes for better query performance
     await queryRunner.createIndex(
       'disputes',
-      new Index('IDX_disputes_market_id', ['market_id']),
+      new TableIndex('IDX_disputes_market_id', ['market_id']),
     );
 
     await queryRunner.createIndex(
       'disputes',
-      new Index('IDX_disputes_disputant_id', ['disputant_id']),
+      new TableIndex('IDX_disputes_disputant_id', ['disputant_id']),
     );
 
     await queryRunner.createIndex(
       'disputes',
-      new Index('IDX_disputes_status', ['status']),
+      new TableIndex('IDX_disputes_status', ['status']),
     );
 
     await queryRunner.createIndex(
       'disputes',
-      new Index('IDX_disputes_resolved_by_id', ['resolved_by_id']),
+      new TableIndex('IDX_disputes_resolved_by_id', ['resolved_by_id']),
     );
   }
 
