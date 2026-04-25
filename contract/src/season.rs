@@ -176,6 +176,20 @@ pub(crate) fn track_user_profile(env: &Env, address: &Address) {
 
     users.push_back(address.clone());
     store_user_list(env, &users);
+
+    let has_predictions = env
+        .storage()
+        .persistent()
+        .get::<DataKey, UserProfile>(&DataKey::User(address.clone()))
+        .map(|profile| profile.total_predictions > 0)
+        .unwrap_or(false);
+
+    if has_predictions {
+        if let Some(mut season) = get_active_season(env) {
+            season.participant_count = season.participant_count.saturating_add(1);
+            store_season(env, &season);
+        }
+    }
 }
 
 pub fn load_season(env: &Env, season_id: u32) -> Result<Season, InsightArenaError> {
@@ -528,6 +542,26 @@ pub fn get_leaderboard(
         .ok_or(InsightArenaError::SeasonNotFound)?;
     bump_leaderboard(env, season_id);
     Ok(snapshot)
+}
+
+pub fn get_season_participants(
+    env: &Env,
+    season_id: u32,
+) -> Result<Vec<Address>, InsightArenaError> {
+    let snapshot = get_leaderboard(env, season_id)?;
+    let mut participants = Vec::new(env);
+
+    for entry in snapshot.entries.iter() {
+        if entry.points == 0 {
+            continue;
+        }
+
+        if !participants.iter().any(|user| user == entry.user) {
+            participants.push_back(entry.user);
+        }
+    }
+
+    Ok(participants)
 }
 
 pub fn finalize_season(env: &Env, admin: Address, season_id: u32) -> Result<(), InsightArenaError> {
