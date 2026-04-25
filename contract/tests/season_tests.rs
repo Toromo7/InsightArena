@@ -524,3 +524,90 @@ fn test_season_leaderboard_update_validation() {
     assert_eq!(snapshot.entries.get(0).unwrap().rank, 1);
     assert_eq!(snapshot.entries.get(19).unwrap().rank, 20);
 }
+
+#[test]
+fn test_participant_count_increments_on_first_prediction() {
+    let env = Env::default();
+    let (client, xlm_token, admin, _oracle) = deploy(&env);
+
+    fund(&env, &xlm_token, &admin, 200_000_000);
+    approve_reward_pool(&env, &xlm_token, &admin, &client.address, 100_000_000);
+    let season_id = client.create_season(&admin, &0, &10_000, &100_000_000);
+    assert_eq!(client.get_season(&season_id).participant_count, 0);
+
+    let predictor = Address::generate(&env);
+    fund(&env, &xlm_token, &predictor, 50_000_000);
+    let market_id = client.create_market(&admin, &default_market_params(&env));
+    client.submit_prediction(&predictor, &market_id, &symbol_short!("yes"), &10_000_000);
+
+    let season = client.get_season(&season_id);
+    assert_eq!(season.participant_count, 1);
+}
+
+#[test]
+fn test_get_season_participants_returns_correct_users() {
+    let env = Env::default();
+    let (client, xlm_token, admin, _oracle) = deploy(&env);
+
+    fund(&env, &xlm_token, &admin, 200_000_000);
+    approve_reward_pool(&env, &xlm_token, &admin, &client.address, 100_000_000);
+    let season_id = client.create_season(&admin, &0, &10_000, &100_000_000);
+
+    let user_one = Address::generate(&env);
+    let user_two = Address::generate(&env);
+    let entries = vec![
+        &env,
+        LeaderboardEntry {
+            rank: 1,
+            user: user_one.clone(),
+            points: 120,
+            correct_predictions: 3,
+            total_predictions: 4,
+        },
+        LeaderboardEntry {
+            rank: 2,
+            user: user_two.clone(),
+            points: 75,
+            correct_predictions: 2,
+            total_predictions: 3,
+        },
+        LeaderboardEntry {
+            rank: 3,
+            user: user_two.clone(),
+            points: 0,
+            correct_predictions: 1,
+            total_predictions: 3,
+        },
+    ];
+    client.update_leaderboard(&admin, &season_id, &entries);
+
+    let participants = client.get_season_participants(&season_id);
+    assert_eq!(participants.len(), 2);
+    assert_eq!(participants.get(0).unwrap(), user_one);
+    assert_eq!(participants.get(1).unwrap(), user_two);
+}
+
+#[test]
+fn test_participant_count_does_not_double_count() {
+    let env = Env::default();
+    let (client, xlm_token, admin, _oracle) = deploy(&env);
+
+    fund(&env, &xlm_token, &admin, 200_000_000);
+    approve_reward_pool(&env, &xlm_token, &admin, &client.address, 100_000_000);
+    let season_id = client.create_season(&admin, &0, &10_000, &100_000_000);
+
+    let predictor = Address::generate(&env);
+    fund(&env, &xlm_token, &predictor, 100_000_000);
+
+    let market_one = client.create_market(&admin, &default_market_params(&env));
+    client.submit_prediction(&predictor, &market_one, &symbol_short!("yes"), &10_000_000);
+
+    let mut second_market_params = default_market_params(&env);
+    second_market_params.end_time += 100;
+    second_market_params.resolution_time += 100;
+    let market_two = client.create_market(&admin, &second_market_params);
+    client.submit_prediction(&predictor, &market_two, &symbol_short!("yes"), &10_000_000);
+
+    let season = client.get_season(&season_id);
+    assert_eq!(season.participant_count, 1);
+}

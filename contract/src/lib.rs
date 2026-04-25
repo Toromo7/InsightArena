@@ -456,6 +456,13 @@ impl InsightArenaContract {
         season::get_leaderboard(&env, season_id)
     }
 
+    pub fn get_season_participants(
+        env: Env,
+        season_id: u32,
+    ) -> Result<Vec<Address>, InsightArenaError> {
+        season::get_season_participants(&env, season_id)
+    }
+
     pub fn finalize_season(
         env: Env,
         admin: Address,
