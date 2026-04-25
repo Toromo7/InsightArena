@@ -664,3 +664,255 @@ fn test_payout_with_zero_losers() {
     let solvency_result = env.as_contract(&client.address, || assert_escrow_solvent(&env));
     assert_eq!(solvency_result, Ok(()));
 }
+
+// ── Part 1: Additional Escrow Tests ───────────────────────────────────────────
+
+#[test]
+fn test_lock_stake_multiple_users() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let xlm_token = register_token(&env);
+    let client = deploy(&env, &xlm_token);
+    let predictor_a = Address::generate(&env);
+    let predictor_b = Address::generate(&env);
+    let predictor_c = Address::generate(&env);
+    let stake_a = 10_000_000_i128;
+    let stake_b = 20_000_000_i128;
+    let stake_c = 30_000_000_i128;
+    let total_stakes = stake_a + stake_b + stake_c;
+
+    fund(&env, &xlm_token, &predictor_a, stake_a);
+    fund(&env, &xlm_token, &predictor_b, stake_b);
+    fund(&env, &xlm_token, &predictor_c, stake_c);
+
+    let token = TokenClient::new(&env, &xlm_token);
+
+    env.as_contract(&client.address, || {
+        lock_stake(&env, &predictor_a, stake_a).unwrap();
+        lock_stake(&env, &predictor_b, stake_b).unwrap();
+        lock_stake(&env, &predictor_c, stake_c).unwrap();
+    });
+
+    let balance_a = token.balance(&predictor_a);
+    let balance_b = token.balance(&predictor_b);
+    let balance_c = token.balance(&predictor_c);
+    assert_eq!(balance_a, 0);
+    assert_eq!(balance_b, 0);
+    assert_eq!(balance_c, 0);
+
+    let contract_balance = env.as_contract(&client.address, || get_contract_balance(&env));
+    assert_eq!(contract_balance, total_stakes);
+}
+
+#[test]
+fn test_release_payout_partial_amount() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let xlm_token = register_token(&env);
+    let client = deploy(&env, &xlm_token);
+    let recipient = Address::generate(&env);
+    let total_payout = 30_000_000_i128;
+
+    fund(&env, &xlm_token, &client.address, total_payout);
+
+    let token = TokenClient::new(&env, &xlm_token);
+    assert_eq!(token.balance(&client.address), total_payout);
+
+    let partial_first = 10_000_000_i128;
+    env.as_contract(&client.address, || {
+        release_payout(&env, &recipient, partial_first).unwrap();
+    });
+    assert_eq!(
+        token.balance(&recipient),
+        partial_first
+    );
+
+    let remaining = total_payout - partial_first;
+    assert_eq!(token.balance(&client.address), remaining);
+
+    env.as_contract(&client.address, || {
+        release_payout(&env, &recipient, remaining).unwrap();
+    });
+    assert_eq!(token.balance(&client.address), 0);
+    assert_eq!(token.balance(&recipient), total_payout);
+}
+
+#[test]
+#[should_panic(expected = "balance is not sufficient")]
+fn test_lock_stake_insufficient_balance() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let xlm_token = register_token(&env);
+    let client = deploy(&env, &xlm_token);
+    let predictor = Address::generate(&env);
+    let available = 5_000_000_i128;
+    let requested = 10_000_000_i128;
+
+    fund(&env, &xlm_token, &predictor, available);
+
+    let _ = env.as_contract(&client.address, || lock_stake(&env, &predictor, requested));
+}
+
+// ── Part 2: Additional Escrow Tests ───────────────────────────────────────────────
+
+#[test]
+fn test_escrow_balance_tracking_accuracy() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let xlm_token = register_token(&env);
+    let client = deploy(&env, &xlm_token);
+    let predictor_a = Address::generate(&env);
+    let predictor_b = Address::generate(&env);
+    let stake_a = 15_000_000_i128;
+    let stake_b = 25_000_000_i128;
+
+    fund(&env, &xlm_token, &predictor_a, stake_a);
+    fund(&env, &xlm_token, &predictor_b, stake_b);
+
+    env.as_contract(&client.address, || {
+        lock_stake(&env, &predictor_a, stake_a).unwrap();
+        lock_stake(&env, &predictor_b, stake_b).unwrap();
+    });
+
+    let balance_after_locks =
+        env.as_contract(&client.address, || get_contract_balance(&env));
+    assert_eq!(balance_after_locks, stake_a + stake_b);
+
+    let payout_first = 10_000_000_i128;
+    env.as_contract(&client.address, || {
+        release_payout(&env, &predictor_a, payout_first).unwrap();
+    });
+
+    let intermediate_balance =
+        env.as_contract(&client.address, || get_contract_balance(&env));
+    assert_eq!(
+        intermediate_balance,
+        (stake_a + stake_b) - payout_first
+    );
+
+    let remaining = (stake_a + stake_b) - payout_first;
+    env.as_contract(&client.address, || {
+        release_payout(&env, &predictor_b, remaining).unwrap();
+    });
+
+    let final_balance = env.as_contract(&client.address, || get_contract_balance(&env));
+    assert_eq!(final_balance, 0);
+}
+
+#[test]
+fn test_escrow_refund_on_market_cancellation() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let xlm_token = register_token(&env);
+    let client = deploy(&env, &xlm_token);
+    let predictor = Address::generate(&env);
+    let stake = 10_000_000_i128;
+
+    fund(&env, &xlm_token, &predictor, stake);
+
+    let market_id = 1_u64;
+    seed_unresolved_market(&env, &client, market_id);
+
+    env.as_contract(&client.address, || {
+        lock_stake(&env, &predictor, stake).unwrap();
+
+        let mut predictors = Vec::new(&env);
+        predictors.push_back(predictor.clone());
+        env.storage()
+            .persistent()
+            .set(&DataKey::PredictorList(market_id), &predictors);
+    });
+
+    let initial_balance =
+        env.as_contract(&client.address, || get_contract_balance(&env));
+    assert_eq!(initial_balance, stake);
+
+    let mut market: Market = env
+        .as_contract(&client.address, || {
+            env.storage()
+                .persistent()
+                .get::<DataKey, Market>(&DataKey::Market(market_id))
+                .unwrap()
+        })
+        .clone();
+    market.is_cancelled = true;
+    market.is_closed = true;
+
+    env.as_contract(&client.address, || {
+        env.storage()
+            .persistent()
+            .set(&DataKey::Market(market_id), &market);
+    });
+
+    let token = TokenClient::new(&env, &xlm_token);
+    let predictor_balance_before = token.balance(&predictor);
+
+    env.as_contract(&client.address, || {
+        refund(&env, &predictor, stake).unwrap();
+    });
+
+    assert_eq!(
+        token.balance(&predictor),
+        predictor_balance_before + stake
+    );
+
+    let final_balance = env.as_contract(&client.address, || get_contract_balance(&env));
+    assert_eq!(final_balance, 0);
+}
+
+#[test]
+fn test_concurrent_escrow_operations() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let xlm_token = register_token(&env);
+    let client = deploy(&env, &xlm_token);
+
+    let predictor_a = Address::generate(&env);
+    let predictor_b = Address::generate(&env);
+    let predictor_c = Address::generate(&env);
+    let stake_a = 8_000_000_i128;
+    let stake_b = 12_000_000_i128;
+    let stake_c = 5_000_000_i128;
+
+    fund(&env, &xlm_token, &predictor_a, stake_a);
+    fund(&env, &xlm_token, &predictor_b, stake_b);
+    fund(&env, &xlm_token, &predictor_c, stake_c);
+
+    env.as_contract(&client.address, || {
+        lock_stake(&env, &predictor_a, stake_a).unwrap();
+        lock_stake(&env, &predictor_b, stake_b).unwrap();
+        lock_stake(&env, &predictor_c, stake_c).unwrap();
+    });
+
+    let token = TokenClient::new(&env, &xlm_token);
+    let balance_a_before = token.balance(&predictor_a);
+    let balance_b_before = token.balance(&predictor_b);
+    let balance_c_before = token.balance(&predictor_c);
+
+    env.as_contract(&client.address, || {
+        release_payout(&env, &predictor_a, stake_a).unwrap();
+    });
+    env.as_contract(&client.address, || {
+        release_payout(&env, &predictor_b, stake_b).unwrap();
+    });
+    env.as_contract(&client.address, || {
+        release_payout(&env, &predictor_c, stake_c).unwrap();
+    });
+
+    assert_eq!(
+        token.balance(&predictor_a),
+        balance_a_before + stake_a
+    );
+    assert_eq!(
+        token.balance(&predictor_b),
+        balance_b_before + stake_b
+    );
+    assert_eq!(
+        token.balance(&predictor_c),
+        balance_c_before + stake_c
+    );
+
+    let final_contract_balance =
+        env.as_contract(&client.address, || get_contract_balance(&env));
+    assert_eq!(final_contract_balance, 0);
+}
