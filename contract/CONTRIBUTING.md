@@ -179,7 +179,7 @@ Guidelines:
 
 ## Schema Changes
 
-The on-chain storage schema is documented in [STORAGE_SCHEMA.md](./STORAGE_SCHEMA.md). Read it before touching `storage_types.rs` or `ttl.rs`.
+The on-chain storage schema is documented in [STORAGE_SCHEMA.md](./STORAGE_SCHEMA.md) and the full contract architecture is in [ARCHITECTURE.md](./ARCHITECTURE.md). Read both before touching `storage_types.rs`.
 
 Key rules:
 
