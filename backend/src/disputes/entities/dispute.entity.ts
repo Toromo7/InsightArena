@@ -1,26 +1,18 @@
 import {
-  IsBoolean,
-  IsEnum,
-  IsOptional,
-  IsString,
-  IsUUID,
-} from 'class-validator';
-import {
-  Column,
-  CreateDateColumn,
   Entity,
-  Index,
-  ManyToOne,
+  Column,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
+  CreateDateColumn,
+  ManyToOne,
+  Index,
+  JoinColumn,
 } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
 import { Market } from '../../markets/entities/market.entity';
+import { User } from '../../users/entities/user.entity';
 
 export enum DisputeStatus {
   PENDING = 'pending',
   RESOLVED = 'resolved',
-  REJECTED = 'rejected',
 }
 
 export enum DisputeResolution {
@@ -29,31 +21,23 @@ export enum DisputeResolution {
 }
 
 @Entity('disputes')
-@Index(['market'])
-@Index(['disputant'])
+@Index(['marketId'])
+@Index(['disputantId'])
 @Index(['status'])
-@Index(['resolved_by'])
+@Index(['resolvedById'])
 export class Dispute {
   @PrimaryGeneratedColumn('uuid')
-  @IsUUID()
   id: string;
 
-  @ManyToOne(() => Market, { onDelete: 'CASCADE' })
-  market: Market;
+  @Column({ name: 'market_id' })
+  @Index()
+  marketId: string;
 
-  @Column({ type: 'uuid' })
-  @IsUUID()
-  market_id: string;
+  @Column({ name: 'disputant_id' })
+  @Index()
+  disputantId: string;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  disputant: User;
-
-  @Column({ type: 'uuid' })
-  @IsUUID()
-  disputant_id: string;
-
-  @Column('text')
-  @IsString()
+  @Column({ type: 'text' })
   reason: string;
 
   @Column({
@@ -61,7 +45,7 @@ export class Dispute {
     enum: DisputeStatus,
     default: DisputeStatus.PENDING,
   })
-  @IsEnum(DisputeStatus)
+  @Index()
   status: DisputeStatus;
 
   @Column({
@@ -69,41 +53,47 @@ export class Dispute {
     enum: DisputeResolution,
     nullable: true,
   })
-  @IsOptional()
-  @IsEnum(DisputeResolution)
   resolution: DisputeResolution | null;
 
-  @Column({ type: 'text', nullable: true })
-  @IsOptional()
-  @IsString()
-  admin_notes: string | null;
+  @Column({ name: 'admin_notes', type: 'text', nullable: true })
+  adminNotes: string | null;
 
-  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
-  @IsOptional()
-  resolved_by: User | null;
+  @Column({ name: 'resolved_by_id', nullable: true })
+  @Index()
+  resolvedById: string | null;
 
-  @Column({ type: 'uuid', nullable: true })
-  @IsOptional()
-  @IsUUID()
-  resolved_by_id: string | null;
+  @Column({ name: 'resolved_at', type: 'timestamp', nullable: true })
+  resolvedAt: Date | null;
 
-  @Column({ type: 'timestamptz', nullable: true })
-  @IsOptional()
-  resolved_at: Date | null;
+  @Column({
+    name: 'on_chain_dispute_id',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
+  onChainDisputeId: string | null;
 
-  @Column({ type: 'text', nullable: true })
-  @IsOptional()
-  @IsString()
-  on_chain_dispute_id: string | null;
+  @Column({
+    name: 'on_chain_resolution_tx',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
+  onChainResolutionTx: string | null;
 
-  @Column({ type: 'text', nullable: true })
-  @IsOptional()
-  @IsString()
-  on_chain_resolution_tx: string | null;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @CreateDateColumn()
-  created_at: Date;
+  // Relationships
+  @ManyToOne(() => Market, { eager: true })
+  @JoinColumn({ name: 'market_id', referencedColumnName: 'id' })
+  market: Market;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @ManyToOne(() => User, { eager: true })
+  @JoinColumn({ name: 'disputant_id', referencedColumnName: 'id' })
+  disputant: User;
+
+  @ManyToOne(() => User, { eager: true, nullable: true })
+  @JoinColumn({ name: 'resolved_by_id', referencedColumnName: 'id' })
+  resolvedBy: User | null;
 }

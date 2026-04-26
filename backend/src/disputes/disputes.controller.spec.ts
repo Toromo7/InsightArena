@@ -4,40 +4,43 @@ import { DisputesService } from './disputes.service';
 import { Dispute, DisputeStatus } from './entities/dispute.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateDisputeDto } from './dto/create-dispute.dto';
-import { ResolveDisputeDto } from './dto/resolve-dispute.dto';
 
 describe('DisputesController', () => {
   let controller: DisputesController;
   let service: DisputesService;
 
   const mockUser: User = {
-    id: 'user-id',
+    id: 'user-123',
     email: 'test@example.com',
     username: 'testuser',
-  } as User;
-
-  const mockDispute: Dispute = {
-    id: 'dispute-id',
-    market_id: 'market-id',
-    disputant_id: 'user-id',
-    reason: 'Test dispute reason',
-    status: DisputeStatus.PENDING,
-    resolution: null,
-    admin_notes: null,
-    resolved_by_id: null,
-    resolved_at: null,
-    on_chain_dispute_id: null,
-    on_chain_resolution_tx: null,
+    role: 'user',
     created_at: new Date(),
     updated_at: new Date(),
+  } as User;
+
+  const mockMarket = {
+    id: 'market-123',
+    on_chain_market_id: 'chain-market-123',
+    is_resolved: true,
+    resolution_time: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+  } as any;
+
+  const mockDispute: Dispute = {
+    id: 'dispute-123',
+    marketId: 'market-123',
+    disputantId: 'user-123',
+    reason: 'Test dispute reason',
+    status: DisputeStatus.PENDING,
+    market: mockMarket,
+    disputant: mockUser,
+    createdAt: new Date(),
   } as Dispute;
 
   beforeEach(async () => {
     const mockDisputesService = {
       create: jest.fn(),
-      findAll: jest.fn(),
       findOne: jest.fn(),
-      resolve: jest.fn(),
+      findAll: jest.fn(),
       findByMarket: jest.fn(),
     };
 
@@ -59,91 +62,90 @@ describe('DisputesController', () => {
     expect(controller).toBeDefined();
   });
 
-  describe('createDispute', () => {
+  describe('create', () => {
     const createDisputeDto: CreateDisputeDto = {
-      market_id: 'market-id',
+      market_id: 'market-123',
       reason: 'Test dispute reason',
     };
 
-    it('should create a dispute successfully', async () => {
+    it('should create a dispute', async () => {
       jest.spyOn(service, 'create').mockResolvedValue(mockDispute);
 
-      const result = await controller.createDispute(createDisputeDto, mockUser);
+      const result = await controller.create(createDisputeDto, mockUser);
 
-      expect(service.create).toHaveBeenCalledWith(createDisputeDto, mockUser);
       expect(result).toEqual(mockDispute);
+      expect(service.create).toHaveBeenCalledWith(createDisputeDto, mockUser);
     });
   });
 
-  describe('listDisputes', () => {
-    it('should return paginated disputes', async () => {
-      const mockResponse = {
-        disputes: [mockDispute],
-        total: 1,
-        page: 1,
-        limit: 20,
-      };
-
-      jest.spyOn(service, 'findAll').mockResolvedValue(mockResponse);
-
-      const result = await controller.listDisputes('1', '20', DisputeStatus.PENDING);
-
-      expect(service.findAll).toHaveBeenCalledWith(1, 20, DisputeStatus.PENDING);
-      expect(result).toEqual(mockResponse);
-    });
-
-    it('should use default pagination values', async () => {
-      const mockResponse = {
-        disputes: [mockDispute],
-        total: 1,
-        page: 1,
-        limit: 20,
-      };
-
-      jest.spyOn(service, 'findAll').mockResolvedValue(mockResponse);
-
-      const result = await controller.listDisputes();
-
-      expect(service.findAll).toHaveBeenCalledWith(1, 20, undefined);
-      expect(result).toEqual(mockResponse);
-    });
-  });
-
-  describe('getDispute', () => {
-    it('should return a dispute by ID', async () => {
+  describe('findOne', () => {
+    it('should return a dispute', async () => {
       jest.spyOn(service, 'findOne').mockResolvedValue(mockDispute);
 
-      const result = await controller.getDispute('dispute-id');
+      const result = await controller.findOne('dispute-123');
 
-      expect(service.findOne).toHaveBeenCalledWith('dispute-id');
       expect(result).toEqual(mockDispute);
+      expect(service.findOne).toHaveBeenCalledWith('dispute-123');
     });
   });
 
-  describe('resolveDispute', () => {
-    const resolveDisputeDto: ResolveDisputeDto = {
-      resolution: 'upheld' as any,
-      admin_notes: 'Admin notes',
-    };
+  describe('findAll', () => {
+    it('should return paginated disputes', async () => {
+      const mockResult = {
+        disputes: [mockDispute],
+        total: 1,
+        page: 1,
+        limit: 20,
+      };
+      jest.spyOn(service, 'findAll').mockResolvedValue(mockResult);
 
-    it('should resolve a dispute successfully', async () => {
-      jest.spyOn(service, 'resolve').mockResolvedValue(mockDispute);
+      const result = await controller.findAll('1', '20');
 
-      const result = await controller.resolveDispute('dispute-id', resolveDisputeDto, mockUser);
+      expect(result).toEqual(mockResult);
+      expect(service.findAll).toHaveBeenCalledWith(1, 20, undefined);
+    });
 
-      expect(service.resolve).toHaveBeenCalledWith('dispute-id', resolveDisputeDto, mockUser);
-      expect(result).toEqual(mockDispute);
+    it('should parse query parameters correctly', async () => {
+      const mockResult = {
+        disputes: [mockDispute],
+        total: 1,
+        page: 2,
+        limit: 10,
+      };
+      jest.spyOn(service, 'findAll').mockResolvedValue(mockResult);
+
+      await controller.findAll('2', '10', DisputeStatus.PENDING);
+
+      expect(service.findAll).toHaveBeenCalledWith(
+        2,
+        10,
+        DisputeStatus.PENDING,
+      );
+    });
+
+    it('should use default values for pagination', async () => {
+      const mockResult = {
+        disputes: [mockDispute],
+        total: 1,
+        page: 1,
+        limit: 20,
+      };
+      jest.spyOn(service, 'findAll').mockResolvedValue(mockResult);
+
+      await controller.findAll();
+
+      expect(service.findAll).toHaveBeenCalledWith(1, 20, undefined);
     });
   });
 
-  describe('getMarketDisputes', () => {
+  describe('findByMarket', () => {
     it('should return disputes for a market', async () => {
       jest.spyOn(service, 'findByMarket').mockResolvedValue([mockDispute]);
 
-      const result = await controller.getMarketDisputes('market-id');
+      const result = await controller.findByMarket('market-123');
 
-      expect(service.findByMarket).toHaveBeenCalledWith('market-id');
       expect(result).toEqual([mockDispute]);
+      expect(service.findByMarket).toHaveBeenCalledWith('market-123');
     });
   });
 });

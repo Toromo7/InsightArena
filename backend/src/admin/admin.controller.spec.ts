@@ -139,10 +139,16 @@ describe('AdminController', () => {
       };
       service.listFlags.mockResolvedValue(mockFlags);
 
-      const result = await controller.listFlags({ page: '1', limit: '10' } as any);
+      const result = await controller.listFlags({
+        page: '1',
+        limit: '10',
+      } as any);
 
       expect(result).toEqual(mockFlags);
-      expect(service.listFlags).toHaveBeenCalledWith({ page: '1', limit: '10' });
+      expect(service.listFlags).toHaveBeenCalledWith({
+        page: '1',
+        limit: '10',
+      });
     });
   });
 

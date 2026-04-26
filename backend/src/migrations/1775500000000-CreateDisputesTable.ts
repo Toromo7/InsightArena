@@ -30,15 +30,15 @@ export class CreateDisputesTable1775500000000 implements MigrationInterface {
           },
           {
             name: 'status',
-            type: 'enum',
-            enum: ['pending', 'resolved', 'rejected'],
+            type: 'varchar',
+            length: '20',
             default: "'pending'",
             isNullable: false,
           },
           {
             name: 'resolution',
-            type: 'enum',
-            enum: ['upheld', 'overturned'],
+            type: 'varchar',
+            length: '20',
             isNullable: true,
           },
           {
@@ -53,46 +53,45 @@ export class CreateDisputesTable1775500000000 implements MigrationInterface {
           },
           {
             name: 'resolved_at',
-            type: 'timestamptz',
+            type: 'timestamp',
             isNullable: true,
           },
           {
             name: 'on_chain_dispute_id',
-            type: 'text',
+            type: 'varchar',
+            length: '255',
             isNullable: true,
           },
           {
             name: 'on_chain_resolution_tx',
-            type: 'text',
+            type: 'varchar',
+            length: '255',
             isNullable: true,
           },
           {
             name: 'created_at',
-            type: 'timestamptz',
-            default: 'now()',
-            isNullable: false,
-          },
-          {
-            name: 'updated_at',
-            type: 'timestamptz',
-            default: 'now()',
+            type: 'timestamp',
+            default: 'CURRENT_TIMESTAMP',
             isNullable: false,
           },
         ],
         foreignKeys: [
           {
+            name: 'FK_disputes_market_id',
             columnNames: ['market_id'],
             referencedTableName: 'markets',
             referencedColumnNames: ['id'],
             onDelete: 'CASCADE',
           },
           {
+            name: 'FK_disputes_disputant_id',
             columnNames: ['disputant_id'],
             referencedTableName: 'users',
             referencedColumnNames: ['id'],
             onDelete: 'CASCADE',
           },
           {
+            name: 'FK_disputes_resolved_by_id',
             columnNames: ['resolved_by_id'],
             referencedTableName: 'users',
             referencedColumnNames: ['id'],
@@ -106,22 +105,34 @@ export class CreateDisputesTable1775500000000 implements MigrationInterface {
     // Create indexes for better query performance
     await queryRunner.createIndex(
       'disputes',
-      new TableIndex('IDX_disputes_market_id', ['market_id']),
+      new TableIndex({
+        name: 'IDX_disputes_market_id',
+        columnNames: ['market_id'],
+      }),
     );
 
     await queryRunner.createIndex(
       'disputes',
-      new TableIndex('IDX_disputes_disputant_id', ['disputant_id']),
+      new TableIndex({
+        name: 'IDX_disputes_disputant_id',
+        columnNames: ['disputant_id'],
+      }),
     );
 
     await queryRunner.createIndex(
       'disputes',
-      new TableIndex('IDX_disputes_status', ['status']),
+      new TableIndex({
+        name: 'IDX_disputes_status',
+        columnNames: ['status'],
+      }),
     );
 
     await queryRunner.createIndex(
       'disputes',
-      new TableIndex('IDX_disputes_resolved_by_id', ['resolved_by_id']),
+      new TableIndex({
+        name: 'IDX_disputes_resolved_by_id',
+        columnNames: ['resolved_by_id'],
+      }),
     );
   }
 

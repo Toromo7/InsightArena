@@ -2,127 +2,124 @@ import {
   Controller,
   Get,
   Post,
-  Param,
   Body,
+  Param,
   Query,
   UseGuards,
   HttpCode,
   HttpStatus,
-  ParseUUIDPipe,
-  BadRequestException,
 } from '@nestjs/common';
 import {
-  ApiBearerAuth,
+  ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiTags,
+  ApiParam,
   ApiQuery,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { Roles } from '../common/decorators/roles.decorator';
-import { Role } from '../common/enums/role.enum';
+import { DisputesService } from './disputes.service';
+import { CreateDisputeDto } from './dto/create-dispute.dto';
+import { Dispute, DisputeStatus } from './entities/dispute.entity';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { BanGuard } from '../common/guards/ban.guard';
 import { User } from '../users/entities/user.entity';
-import { Dispute, DisputeStatus } from './entities/dispute.entity';
-import { CreateDisputeDto } from './dto/create-dispute.dto';
-import { ResolveDisputeDto } from './dto/resolve-dispute.dto';
-import { DisputesService } from './disputes.service';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
-@ApiTags('Disputes')
+@ApiTags('disputes')
 @Controller('disputes')
+@UseGuards(JwtAuthGuard, BanGuard)
+@ApiBearerAuth()
 export class DisputesController {
   constructor(private readonly disputesService: DisputesService) {}
 
   @Post()
-  @UseGuards(BanGuard)
   @HttpCode(HttpStatus.CREATED)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Raise a dispute for a resolved market' })
+  @ApiOperation({ summary: 'Create a new dispute' })
   @ApiResponse({
-    status: 201,
+    status: HttpStatus.CREATED,
     description: 'Dispute created successfully',
     type: Dispute,
   })
-  @ApiResponse({ status: 400, description: 'Dispute window has passed or market not resolved' })
-  @ApiResponse({ status: 409, description: 'Dispute already raised for this market' })
-  @ApiResponse({ status: 404, description: 'Market not found' })
-  @ApiResponse({ status: 502, description: 'Soroban contract call failed' })
-  async createDispute(
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Market not found, not resolved, or dispute window passed',
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'Dispute already exists for this market',
+  })
+  async create(
     @Body() createDisputeDto: CreateDisputeDto,
     @CurrentUser() user: User,
   ): Promise<Dispute> {
     return this.disputesService.create(createDisputeDto, user);
   }
 
-  @Get()
-  @Roles(Role.Admin)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'List all disputes (admin only)' })
-  @ApiResponse({
-    status: 200,
-    description: 'Paginated list of disputes',
-  })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'status', required: false, enum: DisputeStatus })
-  async listDisputes(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-    @Query('status') status?: DisputeStatus,
-  ) {
-    const pageNum = page ? parseInt(page, 10) : 1;
-    const limitNum = limit ? Math.min(parseInt(limit, 10), 100) : 20;
-    
-    return this.disputesService.findAll(pageNum, limitNum, status);
-  }
-
   @Get(':id')
-  @Roles(Role.Admin)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get dispute by ID (admin only)' })
+  @ApiOperation({ summary: 'Get a dispute by ID' })
+  @ApiParam({ name: 'id', description: 'Dispute ID' })
   @ApiResponse({
-    status: 200,
-    description: 'Dispute details',
+    status: HttpStatus.OK,
+    description: 'Dispute retrieved successfully',
     type: Dispute,
   })
-  @ApiResponse({ status: 404, description: 'Dispute not found' })
-  async getDispute(@Param('id', ParseUUIDPipe) id: string): Promise<Dispute> {
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Dispute not found',
+  })
+  async findOne(@Param('id') id: string): Promise<Dispute> {
     return this.disputesService.findOne(id);
   }
 
-  @Post(':id/resolve')
-  @Roles(Role.Admin)
-  @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Resolve a dispute (admin only)' })
-  @ApiResponse({
-    status: 200,
-    description: 'Dispute resolved successfully',
-    type: Dispute,
+  @Get()
+  @ApiOperation({ summary: 'Get all disputes with pagination' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number',
   })
-  @ApiResponse({ status: 400, description: 'Dispute is not pending' })
-  @ApiResponse({ status: 404, description: 'Dispute not found' })
-  @ApiResponse({ status: 502, description: 'Soroban contract call failed' })
-  async resolveDispute(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() resolveDisputeDto: ResolveDisputeDto,
-    @CurrentUser() adminUser: User,
-  ): Promise<Dispute> {
-    return this.disputesService.resolve(id, resolveDisputeDto, adminUser);
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: DisputeStatus,
+    description: 'Filter by dispute status',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Disputes retrieved successfully',
+  })
+  async findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: DisputeStatus,
+  ): Promise<{
+    disputes: Dispute[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 20;
+
+    return this.disputesService.findAll(pageNum, limitNum, status);
   }
 
   @Get('market/:marketId')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get disputes for a specific market' })
+  @ApiParam({ name: 'marketId', description: 'Market ID' })
   @ApiResponse({
-    status: 200,
-    description: 'List of disputes for the market',
+    status: HttpStatus.OK,
+    description: 'Market disputes retrieved successfully',
     type: [Dispute],
   })
-  @ApiResponse({ status: 404, description: 'Market not found' })
-  async getMarketDisputes(
-    @Param('marketId', ParseUUIDPipe) marketId: string,
-  ): Promise<Dispute[]> {
+  async findByMarket(@Param('marketId') marketId: string): Promise<Dispute[]> {
     return this.disputesService.findByMarket(marketId);
   }
 }

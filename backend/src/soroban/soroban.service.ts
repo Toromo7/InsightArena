@@ -377,7 +377,9 @@ export class SorobanService {
         .padEnd(64, '0')
         .slice(0, 64);
 
-      this.logger.log(`raiseDispute submitted: dispute_id=${dispute_id} tx_hash=${tx_hash}`);
+      this.logger.log(
+        `raiseDispute submitted: dispute_id=${dispute_id} tx_hash=${tx_hash}`,
+      );
       return Promise.resolve({ dispute_id, tx_hash });
     });
   }

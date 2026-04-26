@@ -1,12 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
-import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { DisputesService } from './disputes.service';
-import { Dispute, DisputeStatus, DisputeResolution } from './entities/dispute.entity';
+import {
+  Dispute,
+  DisputeStatus,
+  DisputeResolution,
+} from './entities/dispute.entity';
 import { Market } from '../markets/entities/market.entity';
 import { User } from '../users/entities/user.entity';
 import { SorobanService } from '../soroban/soroban.service';
+import { Repository } from 'typeorm';
 import { CreateDisputeDto } from './dto/create-dispute.dto';
 import { ResolveDisputeDto } from './dto/resolve-dispute.dto';
 
@@ -17,91 +25,70 @@ describe('DisputesService', () => {
   let sorobanService: SorobanService;
 
   const mockUser: User = {
-    id: 'user-id',
+    id: 'user-123',
     email: 'test@example.com',
     username: 'testuser',
-  } as User;
-
-  const mockAdminUser: User = {
-    id: 'admin-id',
-    email: 'admin@example.com',
-    username: 'admin',
+    role: 'user',
+    created_at: new Date(),
+    updated_at: new Date(),
   } as User;
 
   const mockMarket: Market = {
-    id: 'market-id',
-    on_chain_market_id: 'on-chain-market-id',
-    title: 'Test Market',
-    description: 'Test Description',
-    category: 'test',
-    outcome_options: ['yes', 'no'],
-    end_time: new Date('2024-01-01'),
-    resolution_time: new Date('2024-01-02'),
+    id: 'market-123',
+    on_chain_market_id: 'chain-market-123',
     is_resolved: true,
-    resolved_outcome: 'yes',
-    is_public: true,
-    is_cancelled: false,
-    is_featured: false,
-    total_pool_stroops: '1000000',
-    participant_count: 10,
-    created_at: new Date('2024-01-01'),
+    resolution_time: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
   } as Market;
 
   const mockDispute: Dispute = {
-    id: 'dispute-id',
-    market_id: 'market-id',
-    disputant_id: 'user-id',
+    id: 'dispute-123',
+    marketId: 'market-123',
+    disputantId: 'user-123',
     reason: 'Test dispute reason',
     status: DisputeStatus.PENDING,
-    resolution: null,
-    admin_notes: null,
-    resolved_by_id: null,
-    resolved_at: null,
-    on_chain_dispute_id: null,
-    on_chain_resolution_tx: null,
-    created_at: new Date(),
-    updated_at: new Date(),
+    market: mockMarket,
+    disputant: mockUser,
+    createdAt: new Date(),
   } as Dispute;
 
   beforeEach(async () => {
-    const mockDisputesRepository = {
-      findOne: jest.fn(),
-      create: jest.fn(),
-      save: jest.fn(),
-      findAndCount: jest.fn(),
-      find: jest.fn(),
-    };
-
-    const mockMarketsRepository = {
-      findOne: jest.fn(),
-    };
-
-    const mockSorobanService = {
-      raiseDispute: jest.fn(),
-      resolveDispute: jest.fn(),
-    };
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DisputesService,
         {
           provide: getRepositoryToken(Dispute),
-          useValue: mockDisputesRepository,
+          useValue: {
+            findOne: jest.fn(),
+            create: jest.fn(),
+            save: jest.fn(),
+            findAndCount: jest.fn(),
+            find: jest.fn(),
+            update: jest.fn(),
+          },
         },
         {
           provide: getRepositoryToken(Market),
-          useValue: mockMarketsRepository,
+          useValue: {
+            findOne: jest.fn(),
+          },
         },
         {
           provide: SorobanService,
-          useValue: mockSorobanService,
+          useValue: {
+            raiseDispute: jest.fn(),
+            resolveDispute: jest.fn(),
+          },
         },
       ],
     }).compile();
 
     service = module.get<DisputesService>(DisputesService);
-    disputesRepository = module.get<Repository<Dispute>>(getRepositoryToken(Dispute));
-    marketsRepository = module.get<Repository<Market>>(getRepositoryToken(Market));
+    disputesRepository = module.get<Repository<Dispute>>(
+      getRepositoryToken(Dispute),
+    );
+    marketsRepository = module.get<Repository<Market>>(
+      getRepositoryToken(Market),
+    );
     sorobanService = module.get<SorobanService>(SorobanService);
   });
 
@@ -111,35 +98,40 @@ describe('DisputesService', () => {
 
   describe('create', () => {
     const createDisputeDto: CreateDisputeDto = {
-      market_id: 'market-id',
+      market_id: 'market-123',
       reason: 'Test dispute reason',
     };
 
-    it('should successfully create a dispute', async () => {
+    it('should create a dispute successfully', async () => {
       jest.spyOn(marketsRepository, 'findOne').mockResolvedValue(mockMarket);
       jest.spyOn(disputesRepository, 'findOne').mockResolvedValue(null);
       jest.spyOn(disputesRepository, 'create').mockReturnValue(mockDispute);
       jest.spyOn(disputesRepository, 'save').mockResolvedValue(mockDispute);
+      jest.spyOn(service, 'findOne').mockResolvedValue(mockDispute);
       jest.spyOn(sorobanService, 'raiseDispute').mockResolvedValue({
-        dispute_id: 'on-chain-dispute-id',
-        tx_hash: 'tx-hash',
+        dispute_id: 'chain-dispute-123',
+        tx_hash: 'tx-hash-123',
       });
 
       const result = await service.create(createDisputeDto, mockUser);
 
+      expect(result).toEqual(mockDispute);
       expect(marketsRepository.findOne).toHaveBeenCalledWith({
-        where: { id: 'market-id' },
+        where: { id: 'market-123' },
       });
       expect(disputesRepository.create).toHaveBeenCalledWith({
-        market_id: 'market-id',
-        disputant_id: 'user-id',
+        marketId: 'market-123',
+        disputantId: 'user-123',
         reason: 'Test dispute reason',
         status: DisputeStatus.PENDING,
       });
-      expect(result).toEqual(mockDispute);
+      expect(sorobanService.raiseDispute).toHaveBeenCalledWith(
+        'chain-market-123',
+        'Test dispute reason',
+      );
     });
 
-    it('should throw NotFoundException if market does not exist', async () => {
+    it('should throw NotFoundException if market not found', async () => {
       jest.spyOn(marketsRepository, 'findOne').mockResolvedValue(null);
 
       await expect(service.create(createDisputeDto, mockUser)).rejects.toThrow(
@@ -147,9 +139,11 @@ describe('DisputesService', () => {
       );
     });
 
-    it('should throw BadRequestException if market is not resolved', async () => {
+    it('should throw BadRequestException if market not resolved', async () => {
       const unresolvedMarket = { ...mockMarket, is_resolved: false };
-      jest.spyOn(marketsRepository, 'findOne').mockResolvedValue(unresolvedMarket);
+      jest
+        .spyOn(marketsRepository, 'findOne')
+        .mockResolvedValue(unresolvedMarket);
 
       await expect(service.create(createDisputeDto, mockUser)).rejects.toThrow(
         BadRequestException,
@@ -159,7 +153,7 @@ describe('DisputesService', () => {
     it('should throw BadRequestException if dispute window has passed', async () => {
       const oldMarket = {
         ...mockMarket,
-        resolution_time: new Date('2023-01-01'), // More than 7 days ago
+        resolution_time: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
       };
       jest.spyOn(marketsRepository, 'findOne').mockResolvedValue(oldMarket);
 
@@ -184,43 +178,61 @@ describe('DisputesService', () => {
       admin_notes: 'Admin notes',
     };
 
-    it('should successfully resolve a dispute', async () => {
-      const disputeWithRelations = {
+    const mockAdminUser: User = {
+      ...mockUser,
+      role: 'admin',
+    } as User;
+
+    it('should resolve a dispute successfully', async () => {
+      const findOneSpy = jest.spyOn(service, 'findOne');
+
+      // First call returns the pending dispute
+      findOneSpy.mockResolvedValueOnce(mockDispute);
+
+      const saveSpy = jest.spyOn(disputesRepository, 'save');
+      const resolvedDispute = {
         ...mockDispute,
-        market: mockMarket,
-        disputant: mockUser,
+        status: DisputeStatus.RESOLVED,
+        resolution: DisputeResolution.UPHELD,
       };
+      saveSpy.mockResolvedValue(resolvedDispute);
 
-      jest.spyOn(disputesRepository, 'findOne').mockResolvedValue(disputeWithRelations);
-      jest.spyOn(disputesRepository, 'save').mockResolvedValue(mockDispute);
+      // Second call returns the resolved dispute
+      findOneSpy.mockResolvedValueOnce(resolvedDispute);
+
       jest.spyOn(sorobanService, 'resolveDispute').mockResolvedValue({
-        dispute_id: 'dispute-id',
-        tx_hash: 'resolution-tx-hash',
+        dispute_id: 'chain-dispute-123',
+        tx_hash: 'tx-hash-456',
       });
 
-      const result = await service.resolve('dispute-id', resolveDisputeDto, mockAdminUser);
+      const result = await service.resolve(
+        'dispute-123',
+        resolveDisputeDto,
+        mockAdminUser,
+      );
 
-      expect(disputesRepository.findOne).toHaveBeenCalledWith({
-        where: { id: 'dispute-id' },
-        relations: ['market', 'disputant'],
-      });
-      expect(result).toEqual(mockDispute);
-    });
-
-    it('should throw NotFoundException if dispute does not exist', async () => {
-      jest.spyOn(disputesRepository, 'findOne').mockResolvedValue(null);
-
-      await expect(
-        service.resolve('invalid-id', resolveDisputeDto, mockAdminUser),
-      ).rejects.toThrow(NotFoundException);
+      expect(result.status).toBe(DisputeStatus.RESOLVED);
+      expect(result.resolution).toBe(DisputeResolution.UPHELD);
+      expect(disputesRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: DisputeStatus.RESOLVED,
+          resolution: DisputeResolution.UPHELD,
+          adminNotes: 'Admin notes',
+          resolvedById: 'user-123',
+          resolvedAt: expect.any(Date),
+        }),
+      );
     });
 
     it('should throw BadRequestException if dispute is not pending', async () => {
-      const resolvedDispute = { ...mockDispute, status: DisputeStatus.RESOLVED };
-      jest.spyOn(disputesRepository, 'findOne').mockResolvedValue(resolvedDispute);
+      const resolvedDispute = {
+        ...mockDispute,
+        status: DisputeStatus.RESOLVED,
+      };
+      jest.spyOn(service, 'findOne').mockResolvedValue(resolvedDispute);
 
       await expect(
-        service.resolve('dispute-id', resolveDisputeDto, mockAdminUser),
+        service.resolve('dispute-123', resolveDisputeDto, mockAdminUser),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -229,62 +241,120 @@ describe('DisputesService', () => {
     it('should return a dispute with relations', async () => {
       jest.spyOn(disputesRepository, 'findOne').mockResolvedValue(mockDispute);
 
-      const result = await service.findOne('dispute-id');
+      const result = await service.findOne('dispute-123');
 
-      expect(disputesRepository.findOne).toHaveBeenCalledWith({
-        where: { id: 'dispute-id' },
-        relations: ['market', 'disputant', 'resolved_by'],
-      });
       expect(result).toEqual(mockDispute);
+      expect(disputesRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 'dispute-123' },
+        relations: ['market', 'disputant', 'resolvedBy'],
+      });
     });
 
-    it('should throw NotFoundException if dispute does not exist', async () => {
+    it('should throw NotFoundException if dispute not found', async () => {
       jest.spyOn(disputesRepository, 'findOne').mockResolvedValue(null);
 
-      await expect(service.findOne('invalid-id')).rejects.toThrow(
+      await expect(service.findOne('dispute-123')).rejects.toThrow(
         NotFoundException,
       );
     });
   });
 
-  describe('checkDisputeWindow', () => {
-    it('should return true for market within dispute window', async () => {
-      const recentMarket = {
-        ...mockMarket,
-        resolution_time: new Date(), // Just resolved
-      };
-      jest.spyOn(marketsRepository, 'findOne').mockResolvedValue(recentMarket);
+  describe('findByMarket', () => {
+    it('should return disputes for a market', async () => {
+      const disputes = [mockDispute];
+      jest.spyOn(disputesRepository, 'find').mockResolvedValue(disputes);
 
-      const result = await service.checkDisputeWindow('market-id');
+      const result = await service.findByMarket('market-123');
+
+      expect(result).toEqual(disputes);
+      expect(disputesRepository.find).toHaveBeenCalledWith({
+        where: { marketId: 'market-123' },
+        relations: ['disputant', 'resolvedBy'],
+        order: { createdAt: 'DESC' },
+      });
+    });
+  });
+
+  describe('findAll', () => {
+    it('should return paginated disputes', async () => {
+      const disputes = [mockDispute];
+      const mockFindAndCount = [disputes, 1];
+      jest
+        .spyOn(disputesRepository, 'findAndCount')
+        .mockResolvedValue(mockFindAndCount);
+
+      const result = await service.findAll(1, 20);
+
+      expect(result).toEqual({
+        disputes,
+        total: 1,
+        page: 1,
+        limit: 20,
+      });
+      expect(disputesRepository.findAndCount).toHaveBeenCalledWith({
+        where: {},
+        relations: ['market', 'disputant', 'resolvedBy'],
+        order: { createdAt: 'DESC' },
+        skip: 0,
+        take: 20,
+      });
+    });
+
+    it('should filter by status', async () => {
+      const disputes = [mockDispute];
+      const mockFindAndCount = [disputes, 1];
+      jest
+        .spyOn(disputesRepository, 'findAndCount')
+        .mockResolvedValue(mockFindAndCount);
+
+      await service.findAll(1, 20, DisputeStatus.PENDING);
+
+      expect(disputesRepository.findAndCount).toHaveBeenCalledWith({
+        where: { status: DisputeStatus.PENDING },
+        relations: ['market', 'disputant', 'resolvedBy'],
+        order: { createdAt: 'DESC' },
+        skip: 0,
+        take: 20,
+      });
+    });
+  });
+
+  describe('checkDisputeWindow', () => {
+    it('should return true if dispute window is open', async () => {
+      jest.spyOn(marketsRepository, 'findOne').mockResolvedValue(mockMarket);
+
+      const result = await service.checkDisputeWindow('market-123');
 
       expect(result).toBe(true);
     });
 
-    it('should return false for market outside dispute window', async () => {
+    it('should return false if market not found', async () => {
+      jest.spyOn(marketsRepository, 'findOne').mockResolvedValue(null);
+
+      const result = await service.checkDisputeWindow('market-123');
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false if market not resolved', async () => {
+      const unresolvedMarket = { ...mockMarket, is_resolved: false };
+      jest
+        .spyOn(marketsRepository, 'findOne')
+        .mockResolvedValue(unresolvedMarket);
+
+      const result = await service.checkDisputeWindow('market-123');
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false if dispute window has passed', async () => {
       const oldMarket = {
         ...mockMarket,
-        resolution_time: new Date('2023-01-01'), // More than 7 days ago
+        resolution_time: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
       };
       jest.spyOn(marketsRepository, 'findOne').mockResolvedValue(oldMarket);
 
-      const result = await service.checkDisputeWindow('market-id');
-
-      expect(result).toBe(false);
-    });
-
-    it('should return false for non-existent market', async () => {
-      jest.spyOn(marketsRepository, 'findOne').mockResolvedValue(null);
-
-      const result = await service.checkDisputeWindow('invalid-id');
-
-      expect(result).toBe(false);
-    });
-
-    it('should return false for unresolved market', async () => {
-      const unresolvedMarket = { ...mockMarket, is_resolved: false };
-      jest.spyOn(marketsRepository, 'findOne').mockResolvedValue(unresolvedMarket);
-
-      const result = await service.checkDisputeWindow('market-id');
+      const result = await service.checkDisputeWindow('market-123');
 
       expect(result).toBe(false);
     });
