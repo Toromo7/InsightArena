@@ -24,6 +24,7 @@ import { BanGuard } from '../common/guards/ban.guard';
 import { User } from '../users/entities/user.entity';
 import { BulkCreateMarketsDto } from './dto/bulk-create-markets.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { CreateDisputeDto } from '../disputes/dto/create-dispute.dto';
 import { CreateMarketDto } from './dto/create-market.dto';
 import { UpdateMarketDto } from './dto/update-market.dto';
 import {
@@ -40,6 +41,7 @@ import { MarketTemplate } from './entities/market-template.entity';
 import { Market } from './entities/market.entity';
 import { MarketsService } from './markets.service';
 import { AnalyticsService } from '../analytics/analytics.service';
+import { DisputesService } from '../disputes/disputes.service';
 
 @ApiTags('Markets')
 @Controller('markets')
@@ -47,6 +49,7 @@ export class MarketsController {
   constructor(
     private readonly marketsService: MarketsService,
     private readonly analyticsService: AnalyticsService,
+    private readonly disputesService: DisputesService,
   ) {}
 
   @Get('templates')
@@ -286,5 +289,37 @@ export class MarketsController {
     @Query('to') to?: string,
   ) {
     return this.analyticsService.getMarketHistory(id, from, to);
+  }
+
+  @Post(':id/dispute')
+  @UseGuards(BanGuard)
+  @HttpCode(HttpStatus.CREATED)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Raise a dispute for a resolved market' })
+  @ApiResponse({
+    status: 201,
+    description: 'Dispute created successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Dispute window has passed or market not resolved',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Dispute already raised for this market',
+  })
+  @ApiResponse({ status: 404, description: 'Market not found' })
+  @ApiResponse({ status: 502, description: 'Soroban contract call failed' })
+  async raiseDispute(
+    @Param('id') id: string,
+    @Body() createDisputeDto: { reason: string },
+    @CurrentUser() user: User,
+  ) {
+    // Create dispute DTO with market ID
+    const disputeDto: CreateDisputeDto = {
+      market_id: id,
+      reason: createDisputeDto.reason,
+    };
+    return this.disputesService.create(disputeDto, user);
   }
 }

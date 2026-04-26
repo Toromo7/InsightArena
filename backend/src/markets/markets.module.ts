@@ -9,6 +9,7 @@ import { MarketsService } from './markets.service';
 import { MarketsController } from './markets.controller';
 import { UsersModule } from '../users/users.module';
 import { AnalyticsModule } from '../analytics/analytics.module';
+import { DisputesModule } from '../disputes/disputes.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AnalyticsModule } from '../analytics/analytics.module';
     ]),
     UsersModule,
     AnalyticsModule,
+    DisputesModule,
   ],
   controllers: [MarketsController],
   providers: [MarketsService],
