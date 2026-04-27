@@ -10,7 +10,7 @@ interface AuthGuardProps {
 
 export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
-  const { isAuthenticated, openConnectModal } = useWallet();
+  const { isAuthenticated, isConnectModalOpen, openConnectModal } = useWallet();
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
@@ -19,27 +19,28 @@ export function AuthGuard({ children }: AuthGuardProps) {
 
   useEffect(() => {
     if (!isHydrated) return;
-
-    if (!isAuthenticated) {
+    // Don't redirect while the connect modal is open or user is already authenticated
+    if (!isAuthenticated && !isConnectModalOpen) {
       openConnectModal();
       router.replace("/");
     }
-  }, [isHydrated, isAuthenticated, openConnectModal, router]);
+  }, [
+    isHydrated,
+    isAuthenticated,
+    isConnectModalOpen,
+    openConnectModal,
+    router,
+  ]);
 
   if (!isHydrated) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-900">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#4FD1C5]/20 border-t-[#4FD1C5]" />
-          <p className="text-sm text-gray-400">Checking authentication...</p>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-[#141824]">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#4FD1C5]/20 border-t-[#4FD1C5]" />
       </div>
     );
   }
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  if (!isAuthenticated) return null;
 
   return <>{children}</>;
 }
