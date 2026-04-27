@@ -100,6 +100,9 @@ pub enum InsightArenaError {
     /// No season exists for the given `season_id`.
     /// Raised on any season lookup that returns nothing from storage.
     SeasonNotFound = 42,
+    /// The new season's time range overlaps with an existing non-finalized season.
+    /// Raised when creating a season that would be active simultaneously with another.
+    SeasonOverlap = 43,
 
     // ── Invite ────────────────────────────────────────────────────────────────
     /// The supplied invite code symbol does not exist in storage or does not

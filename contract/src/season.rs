@@ -423,6 +423,23 @@ pub fn create_season(
         return Err(InsightArenaError::InvalidTimeRange);
     }
 
+    let total = season_count(env);
+    let mut season_id = 1_u32;
+    while season_id <= total {
+        if let Some(season) = env
+            .storage()
+            .persistent()
+            .get::<DataKey, Season>(&DataKey::Season(season_id))
+        {
+            if !season.is_finalized {
+                if season.start_time < end_time && start_time < season.end_time {
+                    return Err(InsightArenaError::SeasonOverlap);
+                }
+            }
+        }
+        season_id = season_id.saturating_add(1);
+    }
+
     let season_id = season_count(env)
         .checked_add(1)
         .ok_or(InsightArenaError::Overflow)?;
