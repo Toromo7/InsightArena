@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 
 import ConnectWalletModal from "@/component/ConnectWalletModal";
@@ -27,7 +34,7 @@ export interface WalletContextValue {
   isConnectModalOpen: boolean;
   authenticate: (
     address: string,
-    signMessage: (msg: string) => Promise<string | null>
+    signMessage: (msg: string) => Promise<string | null>,
   ) => Promise<boolean>;
   logout: () => void;
 }
@@ -61,16 +68,42 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-
-    const win = window as unknown as {
-      freighterApi?: unknown;
-      freighter?: unknown;
-    };
-
-    setIsFreighterInstalled(Boolean(win.freighterApi ?? win.freighter));
+    // Detect any Stellar wallet via the kit
+    Promise.all([
+      import("@creit-tech/stellar-wallets-kit/sdk"),
+      import("@creit-tech/stellar-wallets-kit/types"),
+      import("@creit-tech/stellar-wallets-kit/modules/freighter"),
+      import("@creit-tech/stellar-wallets-kit/modules/xbull"),
+      import("@creit-tech/stellar-wallets-kit/modules/albedo"),
+    ])
+      .then(
+        ([
+          { StellarWalletsKit },
+          { Networks },
+          { FreighterModule, FREIGHTER_ID },
+          { xBullModule },
+          { AlbedoModule },
+        ]) => {
+          StellarWalletsKit.init({
+            network: Networks.PUBLIC,
+            selectedWalletId: FREIGHTER_ID,
+            modules: [
+              new FreighterModule(),
+              new xBullModule(),
+              new AlbedoModule(),
+            ],
+          });
+          return StellarWalletsKit.refreshSupportedWallets();
+        },
+      )
+      .then((wallets) => {
+        setIsFreighterInstalled(wallets.some((w) => w.isAvailable));
+      })
+      .catch(() => setIsFreighterInstalled(false));
   }, []);
 
-  const isAuthenticated = useMemo(() => Boolean(address && token), [address, token]);
+  // wallet connected = authenticated (no backend needed)
+  const isAuthenticated = useMemo(() => Boolean(address), [address]);
 
   const openConnectModal = useCallback(() => {
     setAuthError(null);
@@ -81,32 +114,33 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setIsConnectModalOpen(false);
   }, []);
 
-  const authenticate = useCallback<
-    WalletContextValue["authenticate"]
-  >(async (walletAddress, signMessage) => {
-    setIsAuthenticating(true);
-    setAuthError(null);
+  const authenticate = useCallback<WalletContextValue["authenticate"]>(
+    async (walletAddress, signMessage) => {
+      setIsAuthenticating(true);
+      setAuthError(null);
 
-    try {
-      const challenge = `arena_challenge_${Date.now()}`;
-      const signature = await signMessage(challenge);
-      if (!signature) {
-        setAuthError("Authentication failed: signature was not provided.");
+      try {
+        const challenge = `arena_challenge_${Date.now()}`;
+        const signature = await signMessage(challenge);
+        if (!signature) {
+          setAuthError("Authentication failed: signature was not provided.");
+          return false;
+        }
+
+        setAddress(walletAddress);
+        setToken(`mock_jwt_${btoa(signature).slice(0, 24)}`);
+        setUser({ username: walletAddress.slice(0, 6) });
+        return true;
+      } catch (error) {
+        console.error("Wallet authentication failed:", error);
+        setAuthError("Authentication failed. Please try again.");
         return false;
+      } finally {
+        setIsAuthenticating(false);
       }
-
-      setAddress(walletAddress);
-      setToken(`mock_jwt_${btoa(signature).slice(0, 24)}`);
-      setUser({ username: walletAddress.slice(0, 6) });
-      return true;
-    } catch (error) {
-      console.error("Wallet authentication failed:", error);
-      setAuthError("Authentication failed. Please try again.");
-      return false;
-    } finally {
-      setIsAuthenticating(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   const logout = useCallback(() => {
     setAddress(null);
@@ -117,12 +151,17 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     router.push("/");
   }, []);
 
-  const handleModalSuccess = useCallback((walletAddress: string, jwt: string) => {
-    setAddress(walletAddress);
-    setToken(jwt);
-    setUser({ username: walletAddress.slice(0, 6) });
-    setAuthError(null);
-  }, []);
+  const handleModalSuccess = useCallback(
+    (walletAddress: string, _jwt: string) => {
+      setAddress(walletAddress);
+      setToken(`wallet_${walletAddress}`);
+      setUser({ username: walletAddress.slice(0, 6) });
+      setAuthError(null);
+      setIsConnectModalOpen(false);
+      router.push("/dashboard");
+    },
+    [router],
+  );
 
   const value = useMemo<WalletContextValue>(
     () => ({
@@ -152,7 +191,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       isConnectModalOpen,
       authenticate,
       logout,
-    ]
+    ],
   );
 
   return (
