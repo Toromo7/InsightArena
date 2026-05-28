@@ -32,6 +32,7 @@ import { UsersModule } from './users/users.module';
 import { DisputesModule } from './disputes/disputes.module';
 import { ContractModule } from './contract/contract.module';
 import { CreatorEventsModule } from './creator-events/creator-events.module';
+import { CacheWarmingModule } from './cache/cache-warming.module';
 
 @Module({
   imports: [
@@ -94,6 +95,7 @@ import { CreatorEventsModule } from './creator-events/creator-events.module';
     IndexerModule,
     ContractModule,
     CreatorEventsModule,
+    CacheWarmingModule,
   ],
 
   controllers: [AppController],
