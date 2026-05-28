@@ -25,6 +25,7 @@ import { AdminService } from './admin.service';
 import { ActivityLogQueryDto } from './dto/activity-log-query.dto';
 import { BanUserDto } from './dto/ban-user.dto';
 import { ListUsersQueryDto } from './dto/list-users-query.dto';
+import { ListVerifiedAddressesQueryDto } from './dto/list-verified-addresses-query.dto';
 import { ModerateCommentDto } from './dto/moderate-comment.dto';
 import { ReportQueryDto, ReportFormat } from './dto/report-query.dto';
 import { ResolveMarketDto } from './dto/resolve-market.dto';
@@ -65,6 +66,21 @@ export class AdminController {
   @Get('users')
   async listUsers(@Query() query: ListUsersQueryDto) {
     return this.adminService.listUsers(query);
+  }
+
+  @Get('creator-events/verified-addresses')
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(120)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List all verified addresses for creator events' })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated list of verified addresses',
+  })
+  async listVerifiedAddresses(
+    @Query() query: ListVerifiedAddressesQueryDto,
+  ) {
+    return this.adminService.listVerifiedAddresses(query);
   }
 
   @Patch('users/:id/ban')

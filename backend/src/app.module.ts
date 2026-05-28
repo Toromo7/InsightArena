@@ -16,12 +16,14 @@ import { CommonModule } from './common/common.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { CompetitionsModule } from './competitions/competitions.module';
+import { CreatorEventsModule } from './creator-events/creator-events.module';
 import { validate } from './config/env.validation';
 import { FlagsModule } from './flags/flags.module';
 import { HealthModule } from './health/health.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { MarketsModule } from './markets/markets.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { OracleModule } from './oracle/oracle.module';
 import { PredictionsModule } from './predictions/predictions.module';
 import { SearchModule } from './search/search.module';
 import { SeasonsModule } from './seasons/seasons.module';
@@ -75,10 +77,12 @@ import { DisputesModule } from './disputes/disputes.module';
     MarketsModule,
     PredictionsModule,
     CompetitionsModule,
+    CreatorEventsModule,
     SeasonsModule,
     AnalyticsModule,
     LeaderboardModule,
     NotificationsModule,
+    OracleModule,
     SorobanModule,
     AdminModule,
     AchievementsModule,

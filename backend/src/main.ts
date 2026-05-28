@@ -28,6 +28,10 @@ async function bootstrap() {
     .setDescription('The InsightArena Platform API description')
     .setVersion('1.0')
     .addBearerAuth()
+    .addApiKey(
+      { type: 'apiKey', name: 'x-api-key', in: 'header', description: 'Oracle API key' },
+      'api-key',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/v1/docs', app, document);

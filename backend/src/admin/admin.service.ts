@@ -23,8 +23,10 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { Prediction } from '../predictions/entities/prediction.entity';
 import { SorobanService } from '../soroban/soroban.service';
 import { User } from '../users/entities/user.entity';
+import { VerifiedAddress } from './entities/verified-address.entity';
 import { ActivityLogQueryDto } from './dto/activity-log-query.dto';
 import { ListUsersQueryDto } from './dto/list-users-query.dto';
+import { ListVerifiedAddressesQueryDto } from './dto/list-verified-addresses-query.dto';
 import {
   ReportFormat,
   ReportQueryDto,
@@ -55,6 +57,8 @@ export class AdminService {
     private readonly activityLogsRepository: Repository<ActivityLog>,
     @InjectRepository(Flag)
     private readonly flagsRepository: Repository<Flag>,
+    @InjectRepository(VerifiedAddress)
+    private readonly verifiedAddressesRepository: Repository<VerifiedAddress>,
     private readonly analyticsService: AnalyticsService,
     private readonly notificationsService: NotificationsService,
     private readonly sorobanService: SorobanService,
@@ -156,6 +160,36 @@ export class AdminService {
         limit,
         totalPages: Math.ceil(total / limit),
       },
+    };
+  }
+
+  async listVerifiedAddresses(query: ListVerifiedAddressesQueryDto) {
+    const { page = 1, limit = 20, search } = query;
+    const skip = (page - 1) * limit;
+
+    const qb = this.verifiedAddressesRepository.createQueryBuilder('v');
+
+    if (search) {
+      qb.where('v.address ILIKE :search', { search: `%${search}%` });
+    }
+
+    qb.orderBy('v.verified_at', 'DESC').skip(skip).take(limit);
+
+    const [addresses, total] = await qb.getManyAndCount();
+
+    const data = addresses.map((a) => ({
+      address: a.address,
+      verified_at: a.verified_at.toISOString(),
+      verified_by: a.verified_by,
+      events_created: a.events_created,
+    }));
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     };
   }
 
