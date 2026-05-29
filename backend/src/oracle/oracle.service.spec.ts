@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { OracleService } from './oracle.service';
 import { CreatorEventMatch } from '../creator-events/entities/creator-event-match.entity';
 import { CreatorEvent } from '../creator-events/entities/creator-event.entity';
@@ -10,7 +10,9 @@ type MockRepo = jest.Mocked<
   Pick<Repository<any>, 'findOne' | 'createQueryBuilder' | 'find' | 'findByIds'>
 >;
 
-function createMockQueryBuilder(returnValue: any): any {
+function createMockQueryBuilder<T>(
+  returnValue: any,
+): Partial<SelectQueryBuilder<T>> {
   return {
     where: jest.fn().mockReturnThis(),
     andWhere: jest.fn().mockReturnThis(),
@@ -25,7 +27,7 @@ function createMockQueryBuilder(returnValue: any): any {
     groupBy: jest.fn().mockReturnThis(),
     having: jest.fn().mockReturnThis(),
     getOne: jest.fn().mockResolvedValue(null),
-  };
+  } as unknown as Partial<SelectQueryBuilder<T>>;
 }
 
 describe('OracleService', () => {
@@ -93,9 +95,10 @@ describe('OracleService', () => {
 
   describe('getPendingMatches', () => {
     it('should return only matches that have started and not been resolved', async () => {
-      const qb = createMockQueryBuilder([mockMatches, 2]);
-      matchRepo.createQueryBuilder.mockReturnValue(qb);
-      eventRepo.find.mockResolvedValue([mockEvent]);
+      const qb = createMockQueryBuilder<CreatorEvent>([mockMatches, 2]);
+      matchRepo.createQueryBuilder.mockReturnValue(
+        qb as unknown as SelectQueryBuilder<CreatorEvent>,
+      );
 
       const result = await service.getPendingMatches(
         new ListPendingMatchesQueryDto(),
@@ -114,8 +117,10 @@ describe('OracleService', () => {
     });
 
     it('should return empty array when no pending matches', async () => {
-      const qb = createMockQueryBuilder([[], 0]);
-      matchRepo.createQueryBuilder.mockReturnValue(qb);
+      const qb = createMockQueryBuilder<CreatorEvent>([[], 0]);
+      matchRepo.createQueryBuilder.mockReturnValue(
+        qb as unknown as SelectQueryBuilder<CreatorEvent>,
+      );
 
       const result = await service.getPendingMatches(
         new ListPendingMatchesQueryDto(),
@@ -126,9 +131,10 @@ describe('OracleService', () => {
     });
 
     it('should sort matches by match_time ascending (oldest first)', async () => {
-      const qb = createMockQueryBuilder([mockMatches, 2]);
-      matchRepo.createQueryBuilder.mockReturnValue(qb);
-      eventRepo.find.mockResolvedValue([mockEvent]);
+      const qb = createMockQueryBuilder<CreatorEvent>([mockMatches, 2]);
+      matchRepo.createQueryBuilder.mockReturnValue(
+        qb as unknown as SelectQueryBuilder<CreatorEvent>,
+      );
 
       await service.getPendingMatches(new ListPendingMatchesQueryDto());
 
@@ -136,9 +142,10 @@ describe('OracleService', () => {
     });
 
     it('should include event details in response', async () => {
-      const qb = createMockQueryBuilder([mockMatches, 2]);
-      matchRepo.createQueryBuilder.mockReturnValue(qb);
-      eventRepo.find.mockResolvedValue([mockEvent]);
+      const qb = createMockQueryBuilder<CreatorEvent>([mockMatches, 2]);
+      matchRepo.createQueryBuilder.mockReturnValue(
+        qb as unknown as SelectQueryBuilder<CreatorEvent>,
+      );
 
       const result = await service.getPendingMatches(
         new ListPendingMatchesQueryDto(),
@@ -151,9 +158,10 @@ describe('OracleService', () => {
     });
 
     it('should include time_since_match_started_seconds', async () => {
-      const qb = createMockQueryBuilder([mockMatches, 2]);
-      matchRepo.createQueryBuilder.mockReturnValue(qb);
-      eventRepo.find.mockResolvedValue([mockEvent]);
+      const qb = createMockQueryBuilder<CreatorEvent>([mockMatches, 2]);
+      matchRepo.createQueryBuilder.mockReturnValue(
+        qb as unknown as SelectQueryBuilder<CreatorEvent>,
+      );
 
       const result = await service.getPendingMatches(
         new ListPendingMatchesQueryDto(),
@@ -165,9 +173,10 @@ describe('OracleService', () => {
     });
 
     it('should handle pagination', async () => {
-      const qb = createMockQueryBuilder([mockMatches, 2]);
-      matchRepo.createQueryBuilder.mockReturnValue(qb);
-      eventRepo.find.mockResolvedValue([mockEvent]);
+      const qb = createMockQueryBuilder<CreatorEvent>([mockMatches, 2]);
+      matchRepo.createQueryBuilder.mockReturnValue(
+        qb as unknown as SelectQueryBuilder<CreatorEvent>,
+      );
 
       const result = await service.getPendingMatches({ page: 1, limit: 5 });
 

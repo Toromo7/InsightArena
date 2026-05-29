@@ -1,7 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  DeleteResult,
+  InsertResult,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import { IndexerService } from './indexer.service';
 import {
   ContractEvent,
@@ -142,7 +147,7 @@ describe('IndexerService', () => {
 
   describe('reindex', () => {
     it('should reset checkpoint and trigger reindex', async () => {
-      checkpointRepository.upsert.mockResolvedValue({} as any);
+      checkpointRepository.upsert.mockResolvedValue({} as InsertResult);
 
       await service.reindex(100);
 
@@ -223,8 +228,8 @@ describe('IndexerService', () => {
 
       const origCreate = creatorEventRepository.findOne;
       creatorEventRepository.findOne.mockResolvedValue(null);
-      creatorEventRepository.create.mockReturnValue({} as any);
-      creatorEventRepository.save.mockResolvedValue({} as any);
+      creatorEventRepository.create.mockReturnValue({} as CreatorEvent);
+      creatorEventRepository.save.mockResolvedValue({} as CreatorEvent);
 
       const count = await service.retryFailedEvents();
 
@@ -253,7 +258,7 @@ describe('IndexerService', () => {
       };
 
       contractEventRepository.createQueryBuilder.mockReturnValue(
-        mockQueryBuilder as any,
+        mockQueryBuilder as unknown as SelectQueryBuilder<ContractEvent>,
       );
 
       const result = await service.getEventsPaginated(undefined, 10);
@@ -283,11 +288,9 @@ describe('IndexerService', () => {
 
       mockQueryBuilder.getMany.mockResolvedValue(events);
       contractEventRepository.createQueryBuilder.mockReturnValue(
-        mockQueryBuilder as any,
+        mockQueryBuilder as unknown as SelectQueryBuilder<ContractEvent>,
       );
-
       const result = await service.getEventsPaginated(undefined, 5);
-
       expect(result.data).toHaveLength(5);
       expect(result.meta.has_more).toBe(true);
       expect(result.meta.next_cursor).toBeTruthy();
@@ -302,7 +305,9 @@ describe('IndexerService', () => {
 
   describe('cleanupOldEvents', () => {
     it('should delete old processed events', async () => {
-      contractEventRepository.delete.mockResolvedValue({ affected: 10 } as any);
+      contractEventRepository.delete.mockResolvedValue({
+        affected: 10,
+      } as DeleteResult);
 
       const count = await service.cleanupOldEvents(30);
 

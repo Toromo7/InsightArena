@@ -75,7 +75,10 @@ export function renderEmailTemplate(
     default:
       return {
         subject: 'InsightArena Notification',
-        html: wrapHtml('Notification', '<p>You have a new notification from InsightArena.</p>'),
+        html: wrapHtml(
+          'Notification',
+          '<p>You have a new notification from InsightArena.</p>',
+        ),
         text: 'You have a new notification from InsightArena.',
       };
   }

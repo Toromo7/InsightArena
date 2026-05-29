@@ -39,7 +39,9 @@ export class EventStatsResponseDto {
   @ApiProperty({ description: 'Number of pending (unresolved) matches' })
   matchesPending: number;
 
-  @ApiProperty({ description: 'Total predictions submitted across all matches' })
+  @ApiProperty({
+    description: 'Total predictions submitted across all matches',
+  })
   totalPredictions: number;
 
   @ApiProperty({
@@ -60,8 +62,7 @@ export class EventStatsResponseDto {
   averagePredictionsPerUser: number;
 
   @ApiProperty({
-    description:
-      'Percentage of participants who predicted all matches (0-100)',
+    description: 'Percentage of participants who predicted all matches (0-100)',
   })
   completionRate: number;
 }

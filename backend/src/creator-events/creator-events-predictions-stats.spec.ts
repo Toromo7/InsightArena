@@ -1,7 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { ContractService } from '../contract/contract.service';
+import {
+  ContractPrediction,
+  ContractService,
+} from '../contract/contract.service';
 import { CreatorEvent } from '../matches/entities/creator-event.entity';
 import { CreatorEventsService } from './creator-events.service';
 
@@ -98,7 +101,7 @@ describe('CreatorEventsService predictions and stats', () => {
           predicted_at: 1_040_000,
           is_correct: true,
         },
-      ] as any);
+      ] as ContractPrediction[]);
 
       const result = await service.getUserPredictionsForEvent('1', 'GUSER');
 

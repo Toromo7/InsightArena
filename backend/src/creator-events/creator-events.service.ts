@@ -413,9 +413,10 @@ export class CreatorEventsService {
 
     const distributionResults = await Promise.all(
       matches.map(async (match) => {
-        const distribution = await this.contractService.getPredictionDistribution(
-          String(match.matchId),
-        );
+        const distribution =
+          await this.contractService.getPredictionDistribution(
+            String(match.matchId),
+          );
         return {
           matchId: String(match.matchId),
           homeTeam: match.homeTeam,
@@ -490,7 +491,9 @@ export class CreatorEventsService {
 
     for (const prediction of userPredictions) {
       const normalized = normalizeContractPrediction(prediction);
-      const match = matches.find((m) => String(m.matchId) === normalized.matchId);
+      const match = matches.find(
+        (m) => String(m.matchId) === normalized.matchId,
+      );
       if (!match) continue;
 
       if (!match.resolved) {

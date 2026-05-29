@@ -7,7 +7,10 @@ describe('IndexerHealthController', () => {
   let healthService: jest.Mocked<
     Pick<
       IndexerHealthService,
-      'getHealth' | 'getDashboard' | 'getPrometheusMetrics' | 'triggerManualSync'
+      | 'getHealth'
+      | 'getDashboard'
+      | 'getPrometheusMetrics'
+      | 'triggerManualSync'
     >
   >;
 

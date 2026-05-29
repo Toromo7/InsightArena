@@ -65,7 +65,10 @@ export class EmailService implements OnModuleInit, OnModuleDestroy {
     if (userAddress) {
       const allowed = await this.isEmailAllowed(userAddress, template);
       if (!allowed) {
-        return { queued: false, reason: 'User has opted out of email notifications' };
+        return {
+          queued: false,
+          reason: 'User has opted out of email notifications',
+        };
       }
     }
 
@@ -88,7 +91,10 @@ export class EmailService implements OnModuleInit, OnModuleDestroy {
     if (params.userAddress) {
       const allowed = await this.isEmailAllowed(params.userAddress);
       if (!allowed) {
-        return { queued: false, reason: 'User has opted out of email notifications' };
+        return {
+          queued: false,
+          reason: 'User has opted out of email notifications',
+        };
       }
     }
 

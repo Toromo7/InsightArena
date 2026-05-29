@@ -51,7 +51,9 @@ describe('NotificationsController', () => {
 
   describe('getNotifications', () => {
     it('should return paginated notifications for the user address', async () => {
-      const paginated = {
+      const paginated: Awaited<
+        ReturnType<NotificationsService['findAllForUser']>
+      > = {
         data: [mockNotification],
         total: 1,
         page: 1,
@@ -60,7 +62,7 @@ describe('NotificationsController', () => {
       };
       const spy = jest
         .spyOn(service, 'findAllForUser')
-        .mockResolvedValue(paginated as any);
+        .mockResolvedValue(paginated);
 
       const result = await controller.getNotifications(
         'GBRPYHIL2CI3WHZDTOOQFC6EB4RRJC3XNRBF7XN',

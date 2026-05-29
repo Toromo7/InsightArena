@@ -214,8 +214,16 @@ export class ContractService {
       return null;
     }
 
+    const eventIdRaw = result.eventId ?? result.event_id ?? eventId;
+    const eventIdString =
+      typeof eventIdRaw === 'string'
+        ? eventIdRaw
+        : typeof eventIdRaw === 'number'
+          ? String(eventIdRaw)
+          : eventId;
+
     return {
-      eventId: String(result.eventId ?? result.event_id ?? eventId),
+      eventId: eventIdString,
       participantCount: Number(
         result.participantCount ?? result.participant_count ?? 0,
       ),

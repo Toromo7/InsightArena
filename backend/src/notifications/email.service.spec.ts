@@ -7,7 +7,9 @@ import { UserPreferences } from '../users/entities/user-preferences.entity';
 
 describe('EmailService', () => {
   let service: EmailService;
-  let userRepository: jest.Mocked<Pick<import('typeorm').Repository<User>, 'findOne'>>;
+  let userRepository: jest.Mocked<
+    Pick<import('typeorm').Repository<User>, 'findOne'>
+  >;
   let preferencesRepository: jest.Mocked<
     Pick<import('typeorm').Repository<UserPreferences>, 'findOne'>
   >;
