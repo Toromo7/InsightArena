@@ -216,7 +216,7 @@ export class NotificationBroadcasterService {
   /**
    * Clean up old confirmations (call periodically)
    */
-  cleanupConfirmations(maxAge: number = 3600000): void {
+  cleanupConfirmations(): void {
     // Simple cleanup - in production, track timestamps
     if (this.deliveryConfirmations.size > 10000) {
       this.deliveryConfirmations.clear();
