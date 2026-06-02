@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts"
-import { CheckCircle, XCircle, MessageSquare, DollarSign, ArrowUp } from "lucide-react"
+import { MessageSquare, ArrowUp } from "lucide-react"
 
 type Params = { id: string | Promise<string> }
 
@@ -23,10 +23,6 @@ const mockInitialSeries = () => {
     yes: Math.min(0.95, Math.max(0.05, 0.5 + Math.sin(i / 5) * 0.12 + (Math.random() - 0.5) * 0.06)),
     no: 1 - (Math.min(0.95, Math.max(0.05, 0.5 + Math.sin(i / 5) * 0.12 + (Math.random() - 0.5) * 0.06))),
   }))
-}
-
-function formatPct(v: number) {
-  return `${(v * 100).toFixed(1)}%`
 }
 
 function useResolvedParam(param: string | Promise<string>) {
@@ -94,7 +90,7 @@ export default function MarketPage({ params }: { params: Params }) {
   }, [isLive])
 
   const chartData = useMemo(
-    () => series.map((p) => ({ time: p.time, yes: +(p.yes * 100).toFixed(02) })),
+    () => series.map((p) => ({ time: p.time, yes: +(p.yes * 100).toFixed(2) })),
     [series]
   )
 
