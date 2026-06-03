@@ -1,8 +1,6 @@
 "use client"
 
 import React, { useEffect, useMemo, useState } from "react"
-// @ts-ignore Experimental `use` import for Next.js 15 async params unwrapping
-import { use as reactUse } from "react"
 import {
   LineChart,
   Line,
@@ -14,7 +12,8 @@ import {
 } from "recharts"
 import { MessageSquare, ArrowUp } from "lucide-react"
 
-type Params = { id: string | Promise<string> }
+type PageParams = { id: string }
+type PageProps = { params: PageParams }
 
 const mockInitialSeries = () => {
   const now = Date.now()
@@ -25,31 +24,8 @@ const mockInitialSeries = () => {
   }))
 }
 
-function useResolvedParam(param: string | Promise<string>) {
-  // Try to use the experimental `use` hook if available to unwrap promises synchronously in RSC contexts.
-  // In client contexts this will simply fallback to async resolution via useEffect.
-  try {
-    // @ts-ignore
-    const maybe = reactUse(param as any)
-    if (typeof maybe === "string") return maybe
-  } catch (e) {
-    // fallthrough to client-side effect
-  }
-
-  const [id, setId] = useState<string | null>(typeof param === "string" ? param : null)
-  useEffect(() => {
-    if (typeof param === "string") return
-    let mounted = true
-    ;(param as Promise<string>).then((v) => mounted && setId(v)).catch(() => mounted && setId(null))
-    return () => {
-      mounted = false
-    }
-  }, [param])
-  return id
-}
-
-export default function MarketPage({ params }: { params: Params }) {
-  const marketId = useResolvedParam(params.id)
+function MarketDetailPage({ params }: PageProps) {
+  const marketId = params.id
 
   const [series, setSeries] = useState(() => mockInitialSeries())
   const [isLive, setIsLive] = useState(true)
@@ -177,7 +153,7 @@ export default function MarketPage({ params }: { params: Params }) {
                     <CartesianGrid stroke="#111827" strokeDasharray="3 3" />
                     <XAxis dataKey="time" tick={{ fill: "#94a3b8" }} />
                     <YAxis tickFormatter={(v) => `${v}%`} tick={{ fill: "#94a3b8" }} />
-                    <Tooltip formatter={(v: any) => `${v}%`} />
+                    <Tooltip formatter={(value: number | string) => `${value}%`} />
                     <Line type="monotone" dataKey="yes" stroke="#10b981" strokeWidth={2.5} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -305,3 +281,5 @@ export default function MarketPage({ params }: { params: Params }) {
     </div>
   )
 }
+
+export default MarketDetailPage
