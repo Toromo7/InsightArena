@@ -22,5 +22,4 @@ export {
   type UserPayout,
   type Winner,
   type RewardDistribution,
-  type CreateEventInput,
 } from "@/context/CreatorEventsContext";
