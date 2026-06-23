@@ -336,6 +336,12 @@ export class CreatorEventsService {
       matchPreview,
       startTime: event.startTime,
       endTime: event.endTime,
+      prizePool: event.prizePool,
+      entryFee: event.entryFee,
+      category: event.category,
+      bannerUrl: event.bannerUrl,
+      isFinalized: event.isFinalized,
+      rewardDistribution: event.rewardDistribution,
     };
   }
 
@@ -679,6 +685,11 @@ export class CreatorEventsService {
       participant_count: event.participant_count,
       match_count: event.match_count,
       rank: Number(rank ?? 0),
+      prize_pool: event.prize_pool,
+      entry_fee: event.entry_fee,
+      category: event.category,
+      banner_url: event.banner_url ?? null,
+      is_finalized: event.is_finalized,
       highlights: this.buildHighlights(event, searchTerm),
     };
   }
