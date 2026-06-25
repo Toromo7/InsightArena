@@ -36,7 +36,7 @@ describe('LeaderboardController', () => {
         {
           provide: LeaderboardService,
           useValue: {
-            getTopLeaderboard: jest.fn(),
+            getTopN: jest.fn(),
             getLeaderboard: jest.fn(),
             getUserRank: jest.fn(),
             getHistory: jest.fn(),
@@ -89,7 +89,7 @@ describe('LeaderboardController', () => {
     it('should return top N leaderboard entries', async () => {
       const mockTop: LeaderboardEntryResponse[] = [mockResponse.data[0]];
       const spy = jest
-        .spyOn(service, 'getTopLeaderboard')
+        .spyOn(service, 'getTopN')
         .mockResolvedValue(mockTop);
 
       const result = await controller.getTopLeaderboard(1);
